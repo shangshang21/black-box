@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>黑箱 · A 剪纸片头</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;900&family=DM+Serif+Display&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="shared/figures.js"></script>
+<style>
+:root{
+  --mustard:#E2A13B; --teal:#1E5451; --verm:#C73A2A; --cream:#EEE4CF; --ink:#17140F;
+  --u:min(1vh,.56vw);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{background:var(--ink);font-family:"Noto Serif SC",serif;color:var(--ink);-webkit-font-smoothing:antialiased}
+.mono{font-family:"Courier Prime",monospace}
+
+/* 纸张纹理 + 剪纸阴影 + 手工逐帧抖动 */
+.paper{position:fixed;inset:0;pointer-events:none;z-index:50;mix-blend-mode:multiply;opacity:.55;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='360' height='360'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .42  0 0 0 0 .38  0 0 0 0 .32  0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+.fibers{position:fixed;inset:0;pointer-events:none;z-index:49;mix-blend-mode:multiply;opacity:.35;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='900' height='900'><filter id='f'><feTurbulence type='fractalNoise' baseFrequency='.012 .04' numOctaves='2' seed='7' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .5  0 0 0 0 .45  0 0 0 0 .38  0 0 0 .5 -.12'/></filter><rect width='100%' height='100%' filter='url(%23f)'/></svg>")}
+.cut{filter:drop-shadow(calc(var(--u)*.32) calc(var(--u)*.45) 0 rgba(28,16,4,.30))}
+.boil{translate:var(--bx,0) var(--by,0);rotate:var(--br,0deg)}
+.hint{position:fixed;right:calc(var(--u)*2.4);top:calc(var(--u)*2);z-index:60;font-size:calc(var(--u)*1.25);letter-spacing:.2em;color:rgba(0,0,0,.35)}
+
+.sc{position:fixed;inset:0;visibility:hidden}
+.strip{position:absolute;display:inline-block;background:var(--cream);color:var(--ink);font-weight:900;
+  font-size:calc(var(--u)*4.3);letter-spacing:.12em;padding:.28em .7em .34em;white-space:nowrap}
+.strip.dark{background:var(--ink);color:var(--cream)}
+
+/* S0 撬动世界 */
+.rig{position:absolute;left:50%;top:66%}
+.fulcrum{position:absolute;left:calc(var(--u)*-7.5);top:calc(var(--u)*.6);width:calc(var(--u)*15);height:calc(var(--u)*13);background:var(--ink);clip-path:polygon(50% 0,100% 100%,0 100%)}
+.lever{position:absolute;left:calc(var(--u)*-38);top:calc(var(--u)*-1);width:calc(var(--u)*76);height:calc(var(--u)*2);transform-origin:50% 50%}
+.bar{position:absolute;inset:0;background:var(--ink)}
+.globe{position:absolute;right:calc(var(--u)*2);bottom:100%;width:calc(var(--u)*16);height:calc(var(--u)*16)}
+.weight{position:absolute;left:calc(var(--u)*2);bottom:100%;width:calc(var(--u)*10);height:calc(var(--u)*10);background:var(--ink);
+  color:var(--mustard);font-family:"DM Serif Display";font-size:calc(var(--u)*7);display:grid;place-items:center;line-height:1}
+
+/* S1 三套系统 */
+.tower{position:absolute;bottom:0;width:calc(var(--u)*13);background:var(--ink)}
+.tower .zh{position:absolute;top:calc(var(--u)*2.2);left:0;right:0;text-align:center;color:var(--cream);font-weight:900;font-size:calc(var(--u)*4.4)}
+.lights{position:absolute;top:calc(var(--u)*10);left:calc(var(--u)*2.6);right:calc(var(--u)*2.6);display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*1.6)}
+.lights i{display:block;aspect-ratio:1;background:var(--cream);animation:blink 1.2s steps(1) infinite}
+@keyframes blink{0%{opacity:1}50%{opacity:.12}}
+
+/* S2 资金 */
+.coin{position:absolute;width:calc(var(--u)*21);height:calc(var(--u)*4.6);border-radius:50%;background:var(--cream);
+  box-shadow:0 calc(var(--u)*1) 0 #b3a88f,0 calc(var(--u)*1.35) 0 var(--ink)}
+.ground{position:absolute;left:0;right:0;bottom:0;height:calc(var(--u)*10);background:var(--ink)}
+.qmark{position:absolute;font-family:"DM Serif Display";font-size:calc(var(--u)*46);line-height:1;color:var(--ink)}
+
+/* S3 代号 */
+.bust{position:absolute;bottom:0;width:calc(var(--u)*19)}
+.bust svg{display:block;width:100%;height:auto}
+.bust.k svg{fill:var(--ink)}
+.bust.x svg{fill:none;stroke:var(--ink);stroke-width:3.2;stroke-dasharray:11 8}
+.tag{position:absolute;left:50%;top:calc(var(--u)*-6);transform:translateX(-50%);white-space:nowrap;font-family:"DM Serif Display";
+  font-size:calc(var(--u)*2.4);padding:.15em .6em .2em;color:var(--ink)}
+.tag.zh{font-family:"Noto Serif SC";font-weight:900}
+
+/* S4 锁孔 */
+.keyhole{position:absolute;left:50%;top:52%;width:calc(var(--u)*7);margin-left:calc(var(--u)*-3.5);margin-top:calc(var(--u)*-2.8);transform-origin:50% 25%}
+.keyhole svg{display:block;width:100%;fill:var(--cream)}
+.boss{position:absolute;left:50%;bottom:0;width:calc(var(--u)*34);margin-left:calc(var(--u)*-17)}
+.boss svg{display:block;width:100%;fill:var(--ink)}
+.redact{position:absolute;left:18%;right:18%;top:21%;height:11%;background:var(--verm);transform-origin:left center}
+
+/* S5 标题 */
+.box{position:absolute;left:50%;top:44%;width:calc(var(--u)*40);height:calc(var(--u)*40);margin:calc(var(--u)*-20) 0 0 calc(var(--u)*-20);
+  background:var(--ink);display:grid;place-items:center}
+.box h1{color:var(--cream);font-weight:900;font-size:calc(var(--u)*14.5);letter-spacing:.06em;line-height:1;white-space:nowrap}
+.seal{position:absolute;right:calc(var(--u)*-5);top:calc(var(--u)*-4.5);width:calc(var(--u)*11);height:calc(var(--u)*11);background:var(--verm);
+  color:var(--cream);font-weight:900;font-size:calc(var(--u)*4.1);line-height:1.05;display:grid;place-items:center;writing-mode:vertical-rl;letter-spacing:.05em;
+  box-shadow:inset 0 0 0 calc(var(--u)*.6) var(--verm),inset 0 0 0 calc(var(--u)*.9) var(--cream)}
+.letters{position:absolute;left:50%;top:calc(44% + var(--u)*25);transform:translateX(-50%);display:flex;gap:calc(var(--u)*.9)}
+.letters span{display:grid;place-items:center;width:calc(var(--u)*4.6);height:calc(var(--u)*5.6);background:var(--cream);
+  font-family:"DM Serif Display";font-size:calc(var(--u)*4.2);color:var(--ink);line-height:1}
+.letters span.sp{background:none;filter:none;width:calc(var(--u)*2)}
+.caseno{position:absolute;left:0;right:0;top:calc(44% - var(--u)*27.5);text-align:center;font-size:calc(var(--u)*1.7);letter-spacing:.35em;color:var(--ink)}
+.prompt{position:absolute;left:0;right:0;bottom:7%;text-align:center;font-size:calc(var(--u)*1.6);letter-spacing:.3em;color:var(--ink);opacity:0;cursor:pointer}
+
+/* S6 名单 */
+.band{position:absolute;left:0;right:0;top:25%;height:50%;background:var(--cream)}
+.band2{position:absolute;left:0;right:0;top:76.5%;height:calc(var(--u)*1.6);background:var(--mustard)}
+.card{position:absolute;top:calc(50% - var(--u)*17.5);width:calc(var(--u)*22);height:calc(var(--u)*31);cursor:pointer;overflow:visible}
+.card .face{position:absolute;inset:0;overflow:hidden}
+.card .face svg{position:absolute;left:8%;right:8%;bottom:0;width:84%;height:auto}
+.card .no{position:absolute;left:calc(var(--u)*1.4);top:calc(var(--u)*1.1);font-size:calc(var(--u)*1.5);font-weight:700;letter-spacing:.12em}
+.card .name{position:absolute;left:50%;bottom:calc(var(--u)*-2.4);transform:translateX(-50%) rotate(var(--tr,-2deg));white-space:nowrap;
+  background:var(--cream);font-family:"DM Serif Display";font-size:calc(var(--u)*2.6);padding:.12em .6em .16em;color:var(--ink)}
+.card .name.zh{font-family:"Noto Serif SC";font-weight:900;font-size:calc(var(--u)*2.3)}
+.card.back .face{background:var(--ink)}
+.card.back .face::before{content:"";position:absolute;inset:calc(var(--u)*1.4);border:calc(var(--u)*.35) solid var(--verm)}
+.card.back .face::after{content:"?";position:absolute;inset:0;display:grid;place-items:center;font-family:"DM Serif Display";font-size:calc(var(--u)*14);color:var(--verm)}
+.listcap{left:calc(var(--u)*4);top:calc(var(--u)*5)}
+#note{left:50%;bottom:calc(var(--u)*6);transform:translateX(-50%);font-size:calc(var(--u)*2.2);font-weight:600;letter-spacing:.14em;opacity:0}
+</style>
+</head>
+<body>
+<div class="fibers"></div>
+<div class="paper"></div>
+<div class="hint mono">R · 重播</div>
+
+<!-- S0 有人，正在撬动这个世界 -->
+<section id="s0" class="sc">
+  <div class="strip cut boil" style="left:9%;top:14%">有人，正在撬动这个世界。</div>
+  <div class="rig">
+    <div class="fulcrum cut boil"></div>
+    <div class="lever" id="lever">
+      <div class="bar cut"></div>
+      <div class="globe cut boil">
+        <svg viewBox="0 0 100 100"><defs><clipPath id="gc"><circle cx="50" cy="50" r="48"/></clipPath></defs>
+          <circle cx="50" cy="50" r="48" fill="#EEE4CF"/>
+          <g clip-path="url(#gc)" fill="none" stroke="#17140F" stroke-width="3.2">
+            <ellipse cx="50" cy="50" rx="19" ry="48"/><ellipse cx="50" cy="50" rx="38" ry="48"/>
+            <line x1="0" y1="50" x2="100" y2="50"/><line x1="0" y1="27" x2="100" y2="27"/><line x1="0" y1="73" x2="100" y2="73"/>
+          </g></svg>
+      </div>
+      <div class="weight cut boil" id="weight">$</div>
+    </div>
+  </div>
+</section>
+
+<!-- S1 三套交易系统 -->
+<section id="s1" class="sc">
+  <div class="strip cut boil" style="right:8%;top:12%">三套交易系统。</div>
+  <div class="tower cut boil" style="left:calc(50% - var(--u)*27);height:48%"><div class="zh">壹</div><div class="lights"></div></div>
+  <div class="tower cut boil" style="left:calc(50% - var(--u)*6.5);height:62%"><div class="zh">贰</div><div class="lights"></div></div>
+  <div class="tower cut boil" style="left:calc(50% + var(--u)*14);height:41%"><div class="zh">叁</div><div class="lights"></div></div>
+</section>
+
+<!-- S2 一笔来路不明的资金 -->
+<section id="s2" class="sc">
+  <div class="strip dark cut boil" style="left:8%;top:12%">一笔来路不明的资金。</div>
+  <div id="coins"></div>
+  <div class="qmark cut boil" style="left:calc(50% + var(--u)*8);top:18%">?</div>
+</section>
+
+<!-- S3 一群只有代号的人 -->
+<section id="s3" class="sc">
+  <div class="strip dark cut boil" style="left:50%;top:12%;transform:translateX(-50%)">一群只有代号的人。</div>
+  <div id="busts"></div>
+</section>
+
+<!-- S4 以及——他 -->
+<section id="s4" class="sc">
+  <div class="strip boil" id="andCap" style="left:50%;top:16%;transform:translateX(-50%);background:none;color:var(--cream)">以及——</div>
+  <div class="keyhole" id="keyhole"><svg viewBox="0 0 20 32"><circle cx="10" cy="8" r="7"/><polygon points="6.5,12 13.5,12 16,31 4,31"/></svg></div>
+  <div class="boss boil" id="boss">
+    <svg viewBox="0 0 200 300"><path d=""/></svg>
+    <div class="redact cut" id="redact"></div>
+  </div>
+  <div class="strip dark cut boil" id="heCap" style="left:calc(50% + var(--u)*22);top:30%;font-size:calc(var(--u)*6)">他。</div>
+</section>
+
+<!-- S5 标题 -->
+<section id="s5" class="sc">
+  <div class="caseno mono" id="caseNo">CASE FILE · No.00263893</div>
+  <div class="box cut boil" id="box"><h1>黑箱</h1><div class="seal boil" id="seal">绝密</div></div>
+  <div class="letters" id="letters"></div>
+  <div class="prompt mono" id="prompt">▶ 点击，翻开名单</div>
+</section>
+
+<!-- S6 名单 -->
+<section id="s6" class="sc">
+  <div class="band"></div><div class="band2"></div>
+  <div class="strip dark cut boil listcap">已知成员 3 · 身份不明 2</div>
+  <div id="cards"></div>
+  <div class="strip dark cut" id="note"></div>
+</section>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const U = () => Math.min(innerHeight / 100, innerWidth * .0056);
+const COL = { mustard: '#E2A13B', teal: '#1E5451', verm: '#C73A2A', cream: '#EEE4CF', ink: '#17140F' };
+
+/* ---------- 搭场景 ---------- */
+// 服务器指示灯
+$$('.lights').forEach(l => { l.innerHTML = Array.from({ length: 9 }, () => `<i style="animation-delay:${(-Math.random() * 1.2).toFixed(2)}s;animation-duration:${(0.6 + Math.random() * 1.4).toFixed(2)}s"></i>`).join(''); });
+// 硬币
+$('#coins').innerHTML = Array.from({ length: 13 }, (_, i) =>
+  `<div class="coin cut" style="left:calc(50% - var(--u)*${24 + (i % 3 - 1) * .8});bottom:calc(var(--u)*${11 + i * 2.5})"></div>`).join('') + '<div class="ground"></div>';
+// 成员半身像
+const MEMBERS = [
+  { name: 'LUNA', kind: 'luna', col: 'mustard', note: 'LUNA —— 执行者。她最近一次下单，是在三天前。' },
+  { name: 'HOUND', kind: 'hound', col: 'teal', note: 'HOUND —— 嗅探者。风吹草动，都先经过他的鼻子。' },
+  { name: '武器大师', kind: 'smith', col: 'verm', zh: 1, note: '武器大师 —— 休眠中。休眠，不等于退役。' },
+  { name: '？', kind: 'unknown', col: 'ink', zh: 1, note: '身份不明。这个位置，一直空着。' },
+  { name: '？', kind: 'unknown', col: 'ink', zh: 1, note: '身份不明。只留下一个轮廓。' },
+];
+$('#busts').innerHTML = MEMBERS.map((m, i) => {
+  const x = (i - 2) * 22 - 9.5;
+  const tagBg = m.col === 'ink' ? COL.cream : COL[m.col];
+  return `<div class="bust ${m.kind === 'unknown' ? 'x' : 'k'}" style="left:calc(50% + var(--u)*${x})">
+    <div class="tag cut boil ${m.zh ? 'zh' : ''}" style="background:${tagBg};color:${m.col === 'teal' || m.col === 'verm' ? COL.cream : COL.ink}">${m.name}</div>
+    ${FIG.svg(m.kind, { h: 300 })}</div>`;
+}).join('');
+$('#boss svg').innerHTML = FIG.shapes.base;
+// BLACK BOX 字母
+$('#letters').innerHTML = [...'BLACK BOX'].map(c => c === ' ' ? '<span class="sp"></span>' :
+  `<span class="cut boil" style="rotate:${(Math.random() * 8 - 4).toFixed(1)}deg">${c}</span>`).join('');
+// 名单卡片：未知成员是卡片上被剪掉的一个人形洞
+const CARD_X = [-60, -34, -8, 18, 44];
+const CARD_R = [-4, 3, -2, 5, -3];
+$('#cards').innerHTML = MEMBERS.map((m, i) => {
+  const unk = m.kind === 'unknown';
+  const bg = unk ? COL.ink : COL[m.col === 'verm' ? 'verm' : m.col];
+  const fg = unk ? COL.cream : (m.col === 'mustard' ? COL.ink : COL.cream);
+  const inner = unk
+    ? `<svg viewBox="0 0 200 300"><defs><clipPath id="h${i}">${FIG.shapes.base}</clipPath></defs>
+         <g clip-path="url(#h${i})"><rect width="200" height="300" fill="#0a0806"/><g transform="translate(7,9)" fill="${COL.cream}">${FIG.shapes.base}</g></g></svg>`
+    : `<svg viewBox="0 0 200 300" style="fill:${m.col === 'mustard' ? COL.ink : COL.ink}">${FIG.shapes[m.kind]}</svg>`;
+  return `<div class="card cut" data-i="${i}" style="left:calc(50% + var(--u)*${CARD_X[i] - 11});--r:${CARD_R[i]}deg">
+    <div class="face boil" style="background:${bg}">${inner}<div class="no mono" style="color:${fg}">No.${i + 1}</div></div>
+    <div class="name cut ${m.zh ? 'zh' : ''}" style="--tr:${(-CARD_R[i] * .6).toFixed(1)}deg">${m.name}</div></div>`;
+}).join('') + `<div class="card cut back" data-i="6" style="left:calc(50% + var(--u)*${72 - 11});--r:7deg"><div class="face boil"></div></div>`;
+$$('.card').forEach(c => gsap.set(c, { rotation: parseFloat(c.style.getPropertyValue('--r')) }));
+
+/* ---------- 手工逐帧抖动：每秒 9 帧，像一张张剪好的纸被拍下来 ---------- */
+setInterval(() => {
+  const a = U() * .16;
+  for (const b of $$('.boil')) {
+    if (b.closest('.sc') && b.closest('.sc').style.visibility !== 'visible') continue;
+    b.style.setProperty('--bx', ((Math.random() - .5) * a).toFixed(2) + 'px');
+    b.style.setProperty('--by', ((Math.random() - .5) * a).toFixed(2) + 'px');
+    b.style.setProperty('--br', ((Math.random() - .5) * .5).toFixed(2) + 'deg');
+  }
+}, 110);
+
+/* ---------- 时间线：场景之间硬切，动作用 steps() 做成定格动画 ---------- */
+let state = 'intro';
+const tl = gsap.timeline({ paused: true });
+const cut = (id, bg, at) => tl.set('.sc', { visibility: 'hidden' }, at).set('#' + id, { visibility: 'visible' }, at).set('body', { backgroundColor: COL[bg] }, at);
+
+// S0
+cut('s0', 'mustard', 0);
+tl.set('#lever', { rotation: 9 }, 0)
+  .from('#s0 .strip', { x: () => -U() * 60, duration: .5, ease: 'steps(5)' }, .1)
+  .from('.fulcrum', { y: () => U() * 30, duration: .4, ease: 'steps(4)' }, .1)
+  .from('#lever', { y: () => U() * 30, duration: .4, ease: 'steps(4)' }, .25)
+  .from('#weight', { y: () => -U() * 70, duration: .5, ease: 'steps(5)' }, 1.1)
+  .to('#lever', { rotation: -11, duration: .45, ease: 'steps(4)' }, 1.6)
+  .to('.globe', { y: () => -U() * 2.5, duration: .15, ease: 'steps(2)', yoyo: true, repeat: 1 }, 2.05);
+// S1
+cut('s1', 'teal', 3.3);
+tl.from('.tower', { yPercent: 100, duration: .5, ease: 'steps(5)', stagger: .22 }, 3.35)
+  .from('#s1 .strip', { x: () => U() * 60, duration: .45, ease: 'steps(4)' }, 3.5);
+// S2
+cut('s2', 'verm', 5.7);
+tl.from('.coin', { y: () => -U() * 40, opacity: 0, duration: .18, ease: 'steps(3)', stagger: .08 }, 5.75)
+  .from('#s2 .strip', { x: () => -U() * 60, duration: .45, ease: 'steps(4)' }, 5.8)
+  .from('.qmark', { x: () => U() * 60, rotation: 25, duration: .5, ease: 'steps(5)' }, 7.0);
+// S3
+cut('s3', 'cream', 8.3);
+tl.from('.bust', { yPercent: 100, duration: .4, ease: 'steps(4)', stagger: .2 }, 8.35)
+  .from('.bust .tag', { y: () => -U() * 30, opacity: 0, duration: .3, ease: 'steps(3)', stagger: .2 }, 8.6)
+  .from('#s3 .strip', { y: () => -U() * 20, opacity: 0, duration: .3, ease: 'steps(3)' }, 8.5);
+// S4
+cut('s4', 'ink', 11.0);
+tl.set(['#boss', '#heCap'], { opacity: 0 }, 11)
+  .from('#andCap', { opacity: 0, duration: .3, ease: 'steps(3)' }, 11.2)
+  .from('#keyhole', { scale: 0, duration: .3, ease: 'steps(3)' }, 11.5)
+  .to('#andCap', { opacity: 0, duration: .01 }, 12.5)
+  .to('#keyhole', { scale: 90, duration: .7, ease: 'steps(7)' }, 12.5)
+  .set('body', { backgroundColor: COL.cream }, 13.2)
+  .set('#keyhole', { opacity: 0 }, 13.2)
+  .fromTo('#boss', { opacity: 1, yPercent: 100 }, { yPercent: 0, duration: .4, ease: 'steps(4)' }, 13.3)
+  .from('#redact', { scaleX: 0, duration: .25, ease: 'steps(3)' }, 14.0)
+  .set('#heCap', { opacity: 1 }, 14.35)
+  .from('#heCap', { scale: 1.6, duration: .2, ease: 'steps(2)' }, 14.35);
+// S5
+cut('s5', 'cream', 15.9);
+tl.from('#box', { y: () => -U() * 80, duration: .5, ease: 'steps(5)' }, 16.0)
+  .to('#box', { y: () => -U() * 1.6, duration: .08, ease: 'steps(1)', yoyo: true, repeat: 1 }, 16.5)
+  .from('#letters span', { y: () => -U() * 20, opacity: 0, duration: .15, ease: 'steps(2)', stagger: .07 }, 16.8)
+  .from('#seal', { scale: 2.2, opacity: 0, rotation: -20, duration: .24, ease: 'steps(3)' }, 17.7)
+  .to('#seal', { rotation: 8, duration: .01 }, 17.95)
+  .from('#caseNo', { opacity: 0, duration: .3, ease: 'steps(3)' }, 18.2)
+  .to('#prompt', { opacity: 1, duration: .01 }, 18.9)
+  .call(() => { state = 'ready'; gsap.to('#prompt', { opacity: 0, duration: .5, ease: 'steps(1)', repeat: -1, yoyo: true }); }, null, 19);
+
+const SHOT = new URLSearchParams(location.search).get('shot');
+(SHOT ? document.fonts.ready.then(() => new Promise(r => setTimeout(r, 1500))).then(() => document.fonts.ready)
+      : Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 2500))]))
+  .then(() => setTimeout(() => SHOT ? shot(SHOT) : tl.play(), 300));
+
+/* ---------- 名单 ---------- */
+function goList() {
+  state = 'list';
+  gsap.killTweensOf('#prompt');
+  const t = window.__t = gsap.timeline();
+  t.set('.sc', { visibility: 'hidden' }).set('#s6', { visibility: 'visible' }).set('body', { backgroundColor: COL.teal })
+   .from('.band', { scaleX: 0, transformOrigin: 'left', duration: .4, ease: 'steps(4)' })
+   .from('.band2', { scaleX: 0, transformOrigin: 'right', duration: .3, ease: 'steps(3)' }, '-=.2')
+   .from('.card', { y: () => U() * 70, duration: .35, ease: 'steps(4)', stagger: .14 }, '-=.1')
+   .from('.listcap', { x: () => -U() * 50, duration: .35, ease: 'steps(4)' }, '-=.4');
+}
+
+function showNote(text) {
+  const n = $('#note');
+  n.textContent = text;
+  gsap.fromTo(n, { opacity: 0, y: U() * 2 }, { opacity: 1, y: 0, duration: .2, ease: 'steps(2)', overwrite: true });
+}
+$('#cards').addEventListener('mouseover', e => {
+  const c = e.target.closest('.card');
+  if (!c || state !== 'list' || c === $('#cards')._cur) return;
+  $('#cards')._cur = c;
+  const i = +c.dataset.i;
+  if (i === 6) {
+    gsap.fromTo(c, { x: -U() * .8 }, { x: U() * .8, duration: .05, repeat: 7, yoyo: true, ease: 'steps(1)', onComplete: () => gsap.set(c, { x: 0 }) });
+    showNote('不可调阅。');
+    return;
+  }
+  $$('.card').forEach(o => { if (o !== c) gsap.to(o, { y: 0, scale: 1, rotation: parseFloat(o.style.getPropertyValue('--r')), duration: .2, ease: 'steps(2)', overwrite: true }); });
+  gsap.to(c, { y: -U() * 4, scale: 1.06, rotation: 0, duration: .24, ease: 'steps(3)', overwrite: true });
+  showNote(MEMBERS[i].note);
+});
+$('#cards').addEventListener('mouseleave', () => {
+  $('#cards')._cur = null;
+  $$('.card').forEach(o => gsap.to(o, { y: 0, scale: 1, rotation: parseFloat(o.style.getPropertyValue('--r')), duration: .2, ease: 'steps(2)', overwrite: true }));
+  gsap.to('#note', { opacity: 0, duration: .2, ease: 'steps(2)' });
+});
+
+addEventListener('click', () => {
+  if (state === 'intro' && tl.time() < 15.9) tl.seek(15.91);
+  else if (state === 'ready') goList();
+});
+/* ?shot=xxx：定格到某一帧，给 README 截图用 */
+function finishAll() { gsap.globalTimeline.getChildren(false, true, true).forEach(x => { if (x !== tl && x.repeat() !== -1) x.progress(1); }); }
+function shot(n) {
+  const at = { lever: 2.6, coins: 7.9, members: 10.6, him: 15.4, title: tl.duration() }[n];
+  if (at !== undefined) { tl.seek(at); return; }
+  tl.seek(tl.duration()); state = 'ready'; goList(); window.__t.progress(1); finishAll();
+  $$('.card')[0].dispatchEvent(new MouseEvent('mouseover', { bubbles: true })); finishAll();
+}
+addEventListener('keydown', e => { if (e.key === 'r' || e.key === 'R') location.reload(); });
+</script>
+</body>
+</html>

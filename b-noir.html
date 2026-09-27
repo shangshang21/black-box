@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>黑箱 · B 黑色电影</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;600;900&family=Special+Elite&family=Playfair+Display:wght@400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="shared/figures.js"></script>
+<style>
+:root{
+  --ink:#060606; --paper:#dcd4c3; --dim:#6f6a62; --red:#b0141c;
+  --u:min(1vh,.56vw);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:var(--ink);overflow:hidden;color:var(--paper);font-family:"Noto Serif SC",serif;-webkit-font-smoothing:antialiased}
+.mono{font-family:"Special Elite",monospace}
+
+/* 胶片颗粒 / 暗角 / 闪烁 —— 全程覆盖 */
+#grain{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:60;opacity:.06;mix-blend-mode:screen}
+.vig{position:fixed;inset:0;pointer-events:none;z-index:55;background:radial-gradient(ellipse 78% 72% at 50% 46%,transparent 42%,rgba(0,0,0,.92) 100%)}
+.flick{position:fixed;inset:0;pointer-events:none;z-index:56;background:#000;opacity:0;animation:flick 6.5s steps(1) infinite}
+@keyframes flick{0%{opacity:0}9%{opacity:.08}10%{opacity:0}41%{opacity:.04}42%{opacity:0}77%{opacity:.1}78%{opacity:.03}79%{opacity:0}}
+.scene{position:fixed;inset:0;visibility:hidden}
+.hint{position:fixed;right:calc(var(--u)*2.4);top:calc(var(--u)*2);z-index:70;font-size:calc(var(--u)*1.2);letter-spacing:.3em;color:#3d3a35}
+
+/* ---------- 冷开场 ---------- */
+#doorlight{position:absolute;left:50%;top:50%;width:0;height:1px;transform:translate(-50%,-50%);
+  background:linear-gradient(90deg,transparent,rgba(255,236,205,.95) 30%,rgba(255,236,205,.95) 70%,transparent);
+  box-shadow:0 0 calc(var(--u)*2.4) rgba(255,228,188,.55)}
+.line{position:absolute;inset:0;display:grid;place-items:center;opacity:0;
+  font-weight:300;font-size:calc(var(--u)*3);letter-spacing:.46em;text-indent:.46em;color:var(--paper)}
+.him{position:relative;font-weight:900;font-size:calc(var(--u)*10);letter-spacing:0;text-indent:0;line-height:1}
+.strike{position:absolute;left:-22%;right:-22%;top:54%;height:calc(var(--u)*.55);background:var(--red);
+  transform:scaleX(0);transform-origin:left center;box-shadow:0 0 calc(var(--u)*1.6) rgba(176,20,28,.7)}
+
+/* ---------- 标题 ---------- */
+#title .room{position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 50% 58%,#18171a,#0a0a0b 72%)}
+.tt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.case{font-size:calc(var(--u)*1.55);letter-spacing:.34em;color:#8a8375;height:1.4em;margin-bottom:calc(var(--u)*4.5)}
+.tt h1{font-weight:900;font-size:calc(var(--u)*23);letter-spacing:.16em;text-indent:.16em;line-height:1;color:#24211d}
+.tt .en{font-family:"Playfair Display",serif;font-size:calc(var(--u)*2.1);letter-spacing:1.25em;text-indent:1.25em;margin-top:calc(var(--u)*4.2);color:#24211d}
+.patch{position:absolute;top:-20%;height:140%;width:64vw;left:0;pointer-events:none;
+  background:repeating-linear-gradient(171deg,rgb(206,200,188) 0 calc(var(--u)*2.1),rgba(206,200,188,0) calc(var(--u)*3.0) calc(var(--u)*5.3));
+  -webkit-mask-image:radial-gradient(ellipse 48% 44% at 50% 50%,#000 25%,transparent 72%);
+          mask-image:radial-gradient(ellipse 48% 44% at 50% 50%,#000 25%,transparent 72%);
+  filter:blur(calc(var(--u)*.3));mix-blend-mode:color-dodge}
+.lamp{position:absolute;inset:0;pointer-events:none;opacity:0;mix-blend-mode:screen;
+  background:radial-gradient(ellipse 42% 36% at 50% 56%,rgba(232,199,154,.20),transparent 70%)}
+.prompt{position:absolute;left:0;right:0;bottom:10%;text-align:center;font-size:calc(var(--u)*1.45);letter-spacing:.6em;text-indent:.6em;color:#7c766b;opacity:0;cursor:pointer}
+
+/* ---------- 列队 ---------- */
+#lineup{background:#0b0b0c}
+#lineup .wallbg{position:absolute;inset:0;background:linear-gradient(#121214,#0a0a0b)}
+.mk{position:absolute;left:0;right:0;height:1px;background:rgba(220,212,195,.13)}
+.mk.minor{background:rgba(220,212,195,.05)}
+.mk span{position:absolute;top:calc(var(--u)*-2.1);font-family:"Special Elite";font-size:calc(var(--u)*1.35);color:rgba(220,212,195,.34)}
+.mk span.l{left:calc(var(--u)*2.2)} .mk span.r{right:calc(var(--u)*2.2)}
+.row{position:absolute;left:50%;top:0;bottom:0;transform:translateX(-50%);display:flex;width:calc(var(--u)*27*6)}
+.slot{position:relative;width:calc(var(--u)*27);height:100%}
+.num{position:absolute;top:calc(var(--u)*4.5);left:0;right:0;text-align:center;font-family:"Special Elite";font-size:calc(var(--u)*2.6);color:rgba(220,212,195,.38);opacity:0;z-index:1}
+.cone{position:absolute;top:0;bottom:0;left:-45%;right:-45%;pointer-events:none;mix-blend-mode:screen;opacity:0;z-index:1;
+  background:radial-gradient(ellipse 42% 78% at 50% 0%,rgba(255,238,212,.30) 0%,rgba(255,238,212,.11) 46%,transparent 76%)}
+.bulb{position:absolute;top:0;left:50%;width:calc(var(--u)*7);height:calc(var(--u)*1.2);transform:translateX(-50%);border-radius:0 0 50% 50%;
+  background:radial-gradient(ellipse at 50% 0%,rgba(255,244,226,.95),rgba(255,236,208,.2) 60%,transparent 75%);opacity:0;z-index:1}
+.fig,.shadow{position:absolute;left:50%;width:calc(var(--u)*20);margin-left:calc(var(--u)*-10);
+  top:calc(100% - var(--u)*((var(--h) - 27)*.4956 + 3.6))}
+.fig svg,.shadow svg{display:block;width:100%;height:auto;overflow:visible}
+.shadow{z-index:2;opacity:0}
+.shadow svg{fill:#000;filter:blur(calc(var(--u)*.7));transform:translate(calc(var(--u)*3.6),calc(var(--u)*-1.4)) scale(1.05);transform-origin:50% 0}
+.fig{z-index:3;opacity:0;cursor:crosshair}
+.fig svg{fill:url(#bodyG);filter:drop-shadow(0 calc(var(--u)*-.15) calc(var(--u)*.3) rgba(255,236,210,.26))}
+.fig.unk svg{fill:#0d0d0e;filter:url(#ghost) drop-shadow(0 0 calc(var(--u)*.5) rgba(255,236,210,.14));opacity:.85}
+.placard{position:absolute;left:50%;z-index:4;opacity:0;pointer-events:none;white-space:nowrap;
+  top:calc(100% - var(--u)*((var(--h) - 27)*.4956 - 24));
+  background:#d3cab8;color:#151412;padding:calc(var(--u)*.7) calc(var(--u)*1.5) calc(var(--u)*.55);
+  font-family:"Special Elite";font-size:calc(var(--u)*1.6);letter-spacing:.14em;
+  box-shadow:0 calc(var(--u)*.6) calc(var(--u)*1.6) rgba(0,0,0,.7)}
+.placard b{font-weight:400;opacity:.55;margin-right:.6em}
+.placard .zh{font-family:"Noto Serif SC";font-weight:600;letter-spacing:.1em}
+.slot.ghost .shadow{cursor:crosshair}
+.cap{position:absolute;bottom:calc(var(--u)*3);font-size:calc(var(--u)*1.35);letter-spacing:.3em;color:#6a655c;opacity:0;z-index:8}
+.cap.l{left:calc(var(--u)*3)} .cap.r{right:calc(var(--u)*3)}
+#note{position:absolute;left:0;right:0;bottom:calc(var(--u)*7.5);text-align:center;z-index:8;pointer-events:none}
+#note .who{font-family:"Special Elite";font-size:calc(var(--u)*1.3);letter-spacing:.4em;color:#8a8375;height:1.5em}
+#note .say{font-weight:300;font-size:calc(var(--u)*2);letter-spacing:.2em;color:var(--paper);margin-top:calc(var(--u)*1);height:1.6em;text-shadow:0 0 calc(var(--u)*1.2) #000}
+.floor{position:absolute;left:0;right:0;bottom:0;height:22%;z-index:5;pointer-events:none;background:linear-gradient(transparent,rgba(0,0,0,.85))}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="bodyG" gradientUnits="userSpaceOnUse" x1="0" y1="30" x2="0" y2="420">
+      <stop offset="0" stop-color="#3b3731"/><stop offset=".3" stop-color="#181715"/><stop offset="1" stop-color="#060606"/>
+    </linearGradient>
+    <filter id="ghost" x="-20%" y="-5%" width="140%" height="110%">
+      <feTurbulence id="ghostNoise" type="fractalNoise" baseFrequency="0.004 0.09" numOctaves="1" seed="3" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="16" xChannelSelector="R" yChannelSelector="G"/>
+      <feGaussianBlur stdDeviation="1.6"/>
+    </filter>
+  </defs>
+</svg>
+
+<canvas id="grain"></canvas>
+<div class="vig"></div>
+<div class="flick"></div>
+<div class="hint mono">R · 重播</div>
+
+<!-- 冷开场 -->
+<section id="intro" class="scene">
+  <div id="doorlight"></div>
+  <div class="line">有人，正在撬动这个世界。</div>
+  <div class="line">三套交易系统。</div>
+  <div class="line">一笔来路不明的资金。</div>
+  <div class="line">一群只有代号的人。</div>
+  <div class="line">以及——</div>
+  <div class="line" id="himLine"><span class="him">他<i class="strike"></i></span></div>
+</section>
+
+<!-- 标题 -->
+<section id="title" class="scene">
+  <div class="room"></div>
+  <div class="tt">
+    <div class="case mono" id="caseNo"></div>
+    <h1>黑箱</h1>
+    <div class="en">BLACK BOX</div>
+  </div>
+  <div class="patch" id="patch"></div>
+  <div class="lamp" id="lamp"></div>
+  <div class="prompt" id="prompt">点击 · 调取嫌疑人名单</div>
+</section>
+
+<!-- 列队 -->
+<section id="lineup" class="scene">
+  <div class="wallbg"></div>
+  <div id="chart"></div>
+  <div class="row" id="row"></div>
+  <div class="floor"></div>
+  <div id="note"><div class="who" id="noteWho"></div><div class="say" id="noteSay"></div></div>
+  <div class="cap l mono">LINEUP — 嫌疑人辨认</div>
+  <div class="cap r">已知成员 3 · 身份不明 2</div>
+</section>
+
+<script>
+const $ = s => document.querySelector(s);
+const U = () => Math.min(innerHeight / 100, innerWidth * .0056);
+const $$ = s => [...document.querySelectorAll(s)];
+
+/* ---------- 胶片颗粒 ---------- */
+(() => {
+  const c = $('#grain'), g = c.getContext('2d');
+  c.width = 480; c.height = 270;
+  const img = g.createImageData(c.width, c.height), d = img.data;
+  setInterval(() => {
+    for (let i = 0; i < d.length; i += 4) { const v = Math.random() * 255 | 0; d[i] = d[i+1] = d[i+2] = v; d[i+3] = 255; }
+    g.putImageData(img, 0, 0);
+  }, 42);
+})();
+
+/* 不稳定的虚影：让位移噪声不停换种子 */
+setInterval(() => $('#ghostNoise').setAttribute('seed', (Math.random() * 999) | 0), 110);
+
+/* 打字机 */
+function type(el, text, speed = 55) {
+  el._t && clearTimeout(el._t);
+  el.textContent = '';
+  let i = 0;
+  const step = () => {
+    el.textContent = text.slice(0, ++i);
+    if (i < text.length) el._t = setTimeout(step, speed * (0.6 + Math.random() * 0.9));
+  };
+  step();
+}
+
+/* ---------- 开场时间线 ---------- */
+let state = 'intro';
+const lines = $$('#intro .line');
+const tl = gsap.timeline({ paused: true });
+tl.set('#intro', { visibility: 'visible' })
+  .to('#doorlight', { width: '44vw', duration: 1.6, ease: 'power2.inOut' }, .5)
+  .to('#doorlight', { opacity: .15, duration: .05, repeat: 5, yoyo: true })
+  .to('#doorlight', { opacity: 0, width: '10vw', duration: .9, ease: 'power2.in' }, '+=.3');
+
+lines.slice(0, -1).forEach((l, i) => {
+  tl.fromTo(l, { opacity: 0, filter: 'blur(10px)', y: 6 },
+               { opacity: 1, filter: 'blur(0px)', y: 0, duration: 1.1, ease: 'power2.out' }, i ? '+=.15' : '+=.4')
+    .to(l, { opacity: 0, filter: 'blur(6px)', duration: .7, ease: 'power2.in' }, i === 4 ? '+=.5' : '+=1.2');
+});
+tl.set('#himLine', { opacity: 1 })
+  .fromTo('.him', { opacity: 0 }, { opacity: 1, duration: .06, repeat: 3, yoyo: true, repeatDelay: .05 }, '+=.2')
+  .set('.him', { opacity: 1 })
+  .to('.strike', { scaleX: 1, duration: .32, ease: 'power4.in' }, '+=.9')
+  .to('.him', { color: 'rgba(220,212,195,0)', duration: .5, ease: 'steps(4)' }, '+=.35')
+  .set('.strike', { transformOrigin: '50% 50%' })
+  .to('.strike', { scaleX: 9, opacity: 0, duration: .55, ease: 'power3.in' }, '+=.25')
+  .addLabel('title', '+=.5')
+  .set('#intro', { visibility: 'hidden' }, 'title')
+  .set('#title', { visibility: 'visible' }, 'title')
+  // 窗外车灯扫过：百叶窗的光从墙上划过去
+  .fromTo('#patch', { x: () => -innerWidth * .75, skewX: -16 }, { x: () => innerWidth * 1.05, duration: 6.5, ease: 'sine.inOut' }, 'title')
+  .to('.tt h1', { color: '#d9cfbb', duration: 2.2, ease: 'power1.inOut' }, 'title+=4.2')
+  .to('.tt .en', { color: '#948b7b', duration: 2.2 }, 'title+=4.6')
+  .to('#lamp', { opacity: 1, duration: 2.4 }, 'title+=4.2')
+  .call(() => type($('#caseNo'), 'CASE FILE  ·  No.00263893', 60), null, 'title+=5.6')
+  .to('#prompt', { opacity: 1, duration: 1 }, 'title+=7.6')
+  .call(() => { state = 'ready'; gsap.to('#prompt', { opacity: .35, duration: 1.2, repeat: -1, yoyo: true, ease: 'sine.inOut' }); });
+
+const SHOT = new URLSearchParams(location.search).get('shot');
+(SHOT ? document.fonts.ready.then(() => new Promise(r => setTimeout(r, 1500))).then(() => document.fonts.ready)
+      : Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 2500))]))
+  .then(() => setTimeout(() => SHOT ? shot(SHOT) : tl.play(), 300));
+
+/* ---------- 列队 ---------- */
+const MEMBERS = [
+  { no: '01', name: 'LUNA',     kind: 'luna',    h: 168, rot: -2.2, note: '执行者。她最近一次下单，是在三天前。' },
+  { no: '02', name: 'HOUND',    kind: 'hound',   h: 177, rot: 1.6,  note: '嗅探者。市场上任何风吹草动，都先经过他的鼻子。' },
+  { no: '03', name: '武器大师', kind: 'smith',   h: 187, rot: -1.2, note: 'STATUS: DORMANT —— 休眠，不等于退役。', zh: true },
+  { no: '04', name: '？？？',   kind: 'unknown', h: 173, rot: 2.4,  note: '身份不明。信号强度 12%。', zh: true },
+  { no: '05', name: '？？？',   kind: 'unknown', h: 181, rot: -2.8, note: '身份不明。信号强度 3%。', zh: true },
+];
+const GHOST_H = 193;
+
+// 身高刻度
+(() => {
+  let html = '';
+  for (let h = 95; h <= 215; h += 5) {
+    const major = h % 10 === 0;
+    html += `<div class="mk ${major ? '' : 'minor'}" style="top:calc(100% - var(--u)*${((h - 27) * .4956).toFixed(2)})">` +
+      (major ? `<span class="l">${h}</span><span class="r">${h}</span>` : '') + '</div>';
+  }
+  $('#chart').innerHTML = html;
+})();
+
+// 五个人 + 第六个位置
+(() => {
+  const row = $('#row');
+  MEMBERS.forEach((m, i) => {
+    const s = document.createElement('div');
+    s.className = 'slot'; s.style.setProperty('--h', m.h); s.dataset.i = i;
+    s.innerHTML = `
+      <div class="cone"></div><div class="bulb"></div>
+      <div class="num">${i + 1}</div>
+      <div class="shadow">${FIG.svg(m.kind, { h: 900 })}</div>
+      <div class="fig ${m.kind === 'unknown' ? 'unk' : ''}">${FIG.svg(m.kind, { h: 900 })}</div>
+      <div class="placard"><b>${m.no}</b><span class="${m.zh ? 'zh' : ''}">${m.name}</span></div>`;
+    row.appendChild(s);
+    gsap.set(s.querySelector('.placard'), { xPercent: -50, rotation: m.rot });
+  });
+  const g = document.createElement('div');
+  g.className = 'slot ghost'; g.style.setProperty('--h', GHOST_H);
+  g.innerHTML = `<div class="cone"></div><div class="bulb"></div><div class="shadow">${FIG.svg('base', { h: 900 })}</div>`;
+  row.appendChild(g);
+})();
+
+const note = (who, say) => { type($('#noteWho'), who, 28); type($('#noteSay'), say, 70); };
+
+function goLineup() {
+  state = 'lineup';
+  gsap.killTweensOf('#prompt');
+  const t = window.__t = gsap.timeline();
+  t.to('#title', { opacity: 0, duration: .8, ease: 'power2.in' })
+   .set('#title', { visibility: 'hidden' })
+   .set('#lineup', { visibility: 'visible' });
+
+  const slots = $$('.slot');
+  slots.slice(0, 5).forEach((s, i) => {
+    const at = 1.0 + i * .55;
+    // 灯一盏一盏"咔"地亮起来，带一点接触不良
+    t.to(s.querySelectorAll('.cone,.bulb'), { keyframes: [{ opacity: .9, duration: .04 }, { opacity: .1, duration: .06 }, { opacity: 1, duration: .04 }, { opacity: .75, duration: .3 }] }, at)
+     .to(s.querySelector('.shadow'), { opacity: .8, duration: .25 }, at + .05)
+     .to(s.querySelector('.fig'), { opacity: 1, duration: .35 }, at + .05)
+     .to(s.querySelector('.num'), { opacity: 1, duration: .3 }, at + .1)
+     .fromTo(s.querySelector('.placard'), { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: .4, ease: 'power2.out' }, at + .25);
+  });
+  const ghost = slots[5];
+  // 第六盏灯是坏的，只会偶尔闪一下。可墙上的影子，一直都在。
+  t.to(ghost.querySelector('.shadow'), { opacity: .8, duration: .01 }, 4.4)
+   .call(() => brokenBulb(ghost), null, 4.2)
+   .to('.cap', { opacity: 1, duration: 1.2, stagger: .3 }, 4.2)
+   .call(() => note('LINEUP', '五个人。你看清楚了吗？'), null, 4.8);
+}
+
+function brokenBulb(slot) {
+  const lights = slot.querySelectorAll('.cone,.bulb');
+  const blink = () => {
+    gsap.timeline()
+      .to(lights, { opacity: .55, duration: .03 })
+      .to(lights, { opacity: .05, duration: .05 })
+      .to(lights, { opacity: .4, duration: .03 })
+      .to(lights, { opacity: .12, duration: .6 });
+    slot._blink = setTimeout(blink, 1400 + Math.random() * 3200);
+  };
+  gsap.set(lights, { opacity: .12 });
+  blink();
+}
+
+/* 悬停：灯聚焦到一个人身上 */
+$('#row').addEventListener('mouseover', e => {
+  if (state !== 'lineup') return;
+  const s = e.target.closest('.slot');
+  if (!s || s === $('#row')._cur) return;
+  $('#row')._cur = s;
+  const slots = $$('.slot');
+  if (s.classList.contains('ghost')) {
+    // 你一看过去，他就不在了
+    const sh = s.querySelector('.shadow');
+    gsap.to(sh, { x: U() * 7, opacity: 0, duration: .22, ease: 'power2.in', overwrite: true });
+    note('SLOT 6', '……这里没有人。');
+    return;
+  }
+  const i = +s.dataset.i, m = MEMBERS[i];
+  slots.slice(0, 5).forEach(o => gsap.to(o.querySelectorAll('.cone'), { opacity: o === s ? 1 : .32, duration: .35, overwrite: true }));
+  gsap.to(s.querySelector('.placard'), { y: -4, duration: .3, overwrite: 'auto' });
+  note(`SUBJECT ${m.no} · ${m.kind === 'unknown' ? 'UNIDENTIFIED' : m.name.replace('武器大师', 'WEAPONSMITH')}`, m.note);
+});
+$('#row').addEventListener('mouseleave', () => {
+  if (state !== 'lineup') return;
+  $('#row')._cur = null;
+  const slots = $$('.slot');
+  slots.slice(0, 5).forEach(o => {
+    gsap.to(o.querySelectorAll('.cone'), { opacity: .75, duration: .5, overwrite: true });
+    gsap.to(o.querySelector('.placard'), { y: 0, duration: .3 });
+  });
+  // 等你把视线移开，他又回来了
+  gsap.to(slots[5].querySelector('.shadow'), { x: 0, opacity: .8, duration: 2.4, delay: 1.6, ease: 'power1.inOut', overwrite: true });
+});
+$('#row').addEventListener('mouseout', e => {
+  const s = e.target.closest('.slot');
+  if (s && s.classList.contains('ghost') && !s.contains(e.relatedTarget)) {
+    $('#row')._cur = null;
+    gsap.to(s.querySelector('.shadow'), { x: 0, opacity: .8, duration: 2.4, delay: 1.6, ease: 'power1.inOut', overwrite: true });
+  }
+});
+
+/* 视差：人和墙上的影子朝相反方向移一点点 */
+addEventListener('mousemove', e => {
+  if (state !== 'lineup') return;
+  const k = (e.clientX / innerWidth - .5);
+  gsap.to('.fig, .placard', { x: k * -8, duration: .8, ease: 'power2.out', overwrite: 'auto' });
+});
+
+/* 点击：跳过开场 / 进入列队 */
+addEventListener('click', () => {
+  if (state === 'intro' && tl.time() < tl.labels.title) tl.seek(tl.labels.title + .01);
+  else if (state === 'ready') goLineup();
+});
+/* ?shot=xxx：定格到某一帧，给 README 截图用 */
+function finishAll() { gsap.globalTimeline.getChildren(false, true, true).forEach(x => { if (x !== tl && x.repeat() !== -1) x.progress(1); }); }
+function shot(n) {
+  const T = tl.labels.title;
+  const at = { line: 5.4, him: T - 2.0, sweep: T + 3.2, title: tl.duration() }[n];
+  if (at !== undefined) { tl.seek(at); if (n === 'title') $('#caseNo').textContent = 'CASE FILE  ·  No.00263893'; return; }
+  tl.seek(tl.duration()); state = 'ready'; goLineup(); window.__t.progress(1); finishAll();
+  if (n === 'hover') { $$('.slot')[2].querySelector('.fig').dispatchEvent(new MouseEvent('mouseover', { bubbles: true })); finishAll(); }
+}
+addEventListener('keydown', e => { if (e.key === 'r' || e.key === 'R') location.reload(); });
+</script>
+</body>
+</html>

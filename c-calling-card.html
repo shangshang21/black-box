@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>黑箱 · C 预告函</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Noto+Sans+SC:wght@900&family=Noto+Serif+SC:wght@900&family=ZCOOL+QingKe+HuangYou&family=Ma+Shan+Zheng&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="shared/figures.js"></script>
+<style>
+:root{--red:#E3121C;--blk:#0A0A0A;--wht:#F4F1E9;--u:min(1vh,.56vw)}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:var(--blk)}
+body{font-family:"Noto Sans SC",sans-serif;color:var(--wht);-webkit-font-smoothing:antialiased}
+.mono{font-family:"Space Mono",monospace}
+#stage{position:fixed;inset:0;overflow:hidden}
+.hint{position:fixed;right:calc(var(--u)*2.4);top:calc(var(--u)*2);z-index:60;font-size:calc(var(--u)*1.2);letter-spacing:.2em;color:rgba(255,255,255,.35)}
+
+/* 背景：红底 + 旋转放射线 + 网点 */
+.bg{position:absolute;inset:0;background:var(--red)}
+.rays{position:absolute;left:50%;top:50%;width:250vmax;height:250vmax;margin:-125vmax 0 0 -125vmax;
+  background:repeating-conic-gradient(from 0deg,rgba(0,0,0,.16) 0 7deg,transparent 7deg 20deg);animation:spin 60s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.dots{position:absolute;inset:0;background-image:radial-gradient(circle,rgba(0,0,0,.28) 28%,transparent 31%);background-size:calc(var(--u)*1.3) calc(var(--u)*1.3);
+  -webkit-mask-image:linear-gradient(115deg,#000 0%,transparent 45%,transparent 60%,#000 100%);mask-image:linear-gradient(115deg,#000 0%,transparent 45%,transparent 60%,#000 100%)}
+.wipe{position:absolute;inset:-10%;background:var(--blk);z-index:30}
+
+.sc{position:absolute;inset:0;visibility:hidden}
+/* 勒索信拼贴字 */
+.banner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
+.banner .shape{position:absolute;inset:-28% -9%;background:var(--blk);clip-path:polygon(3% 12%,98% 0,100% 84%,1% 100%)}
+.banner.w .shape{background:var(--wht)}
+.banner .txt{position:relative;white-space:nowrap;font-size:calc(var(--u)*6.2)}
+.rt{display:inline-block;padding:.06em .14em .1em;margin:0 .03em;line-height:1.05;vertical-align:middle;box-shadow:.1em .12em 0 rgba(0,0,0,.45)}
+
+/* 标题 */
+#title .slab{position:absolute;left:-10%;right:-10%;top:30%;height:42%;background:var(--blk);transform:skewY(-7deg)}
+.bigen{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%) skewX(-10deg);text-align:center;font-family:Anton;
+  font-size:calc(var(--u)*21);line-height:.9;color:var(--wht);letter-spacing:.02em;text-shadow:calc(var(--u)*.9) calc(var(--u)*.9) 0 var(--red)}
+.bigzh{position:absolute;left:50%;top:22%;transform:translateX(-50%);font-size:calc(var(--u)*10);white-space:nowrap}
+.card{position:absolute;right:7%;bottom:8%;width:calc(var(--u)*34);padding:calc(var(--u)*2.2) calc(var(--u)*2.6);background:var(--wht);color:var(--blk);
+  transform:rotate(7deg);box-shadow:calc(var(--u)*1) calc(var(--u)*1.2) 0 var(--blk)}
+.card .h{display:flex;justify-content:space-between;font-family:Anton;font-size:calc(var(--u)*2.2);letter-spacing:.06em;border-bottom:calc(var(--u)*.4) solid var(--blk);padding-bottom:calc(var(--u)*.6)}
+.card .h span:last-child{color:var(--red)}
+.card .b{font-family:"Noto Serif SC";font-weight:900;font-size:calc(var(--u)*3.4);margin:calc(var(--u)*1.6) 0 calc(var(--u)*1)}
+.card .s{text-align:right;font-family:"Noto Serif SC";font-weight:900;font-size:calc(var(--u)*1.9)}
+.card .s i{display:inline-block;width:5.5em;height:1em;background:var(--blk);vertical-align:-.12em;margin-left:.3em}
+.caseid{position:absolute;left:5%;top:7%;font-size:calc(var(--u)*1.6);letter-spacing:.2em;color:var(--blk);background:var(--wht);padding:.3em .8em;transform:rotate(-3deg)}
+.start{position:absolute;left:6%;bottom:10%;background:var(--blk);color:var(--wht);font-family:Anton;font-size:calc(var(--u)*3.4);letter-spacing:.08em;
+  padding:.25em 1em;transform:skewX(-12deg);cursor:pointer;opacity:0;box-shadow:calc(var(--u)*.8) calc(var(--u)*.8) 0 var(--wht)}
+.start small{font-family:"Noto Sans SC";font-size:.5em;margin-left:.8em;letter-spacing:.2em;vertical-align:.25em}
+
+/* 选择调查对象 */
+#select .sbg{position:absolute;inset:0;background:var(--blk)}
+#select .band{position:absolute;left:-10%;right:-10%;top:58%;height:30%;background:var(--red);transform:skewY(-6deg)}
+.top{position:absolute;left:4%;top:5%;display:flex;align-items:flex-end;gap:calc(var(--u)*2);z-index:5}
+.top .t1{font-family:Anton;font-size:calc(var(--u)*6.5);line-height:.9;background:var(--wht);color:var(--blk);padding:.08em .35em 0;transform:skewX(-10deg)}
+.top .t2{font-size:calc(var(--u)*2.2);letter-spacing:.3em;color:var(--wht);padding-bottom:calc(var(--u)*.6)}
+.panels{position:absolute;left:3%;right:3%;top:17%;bottom:9%;display:flex;gap:calc(var(--u)*1)}
+.pn{position:relative;flex:1 1 0;min-width:0;transform:skewX(-8deg);overflow:hidden;cursor:pointer;background:var(--wht);border:calc(var(--u)*.5) solid var(--blk)}
+.pn .in{position:absolute;inset:0 -12%;transform:skewX(8deg)}
+.pn .sil{position:absolute;left:50%;bottom:0;width:calc(var(--u)*26);margin-left:calc(var(--u)*-13);transform-origin:50% 100%}
+.pn .sil svg{display:block;width:100%;fill:var(--blk)}
+.pn .no{position:absolute;left:24%;top:calc(var(--u)*1.6);font-family:Anton;font-size:calc(var(--u)*4.2);color:var(--red);line-height:1}
+.pn .nm{position:absolute;left:20%;bottom:calc(var(--u)*11);font-family:Anton;font-size:calc(var(--u)*5.4);line-height:1;color:var(--wht);
+  background:var(--blk);padding:.05em .3em;white-space:nowrap;transform:rotate(-4deg)}
+.pn .nm.zh{font-family:"Noto Sans SC";font-size:calc(var(--u)*4.2)}
+.pn .role{position:absolute;left:22%;bottom:calc(var(--u)*7.6);font-size:calc(var(--u)*1.7);background:var(--red);color:var(--wht);padding:.2em .6em;letter-spacing:.2em;white-space:nowrap}
+.pn .stats{position:absolute;left:22%;right:10%;bottom:calc(var(--u)*1.8);font-size:calc(var(--u)*1.35);color:var(--blk);opacity:0}
+.pn .stats div{display:flex;align-items:center;gap:.6em;margin-top:.35em;white-space:nowrap}
+.pn .stats b{width:3.2em;font-weight:900}
+.pn .stats i{display:inline-block;width:1.5em;height:.7em;background:rgba(0,0,0,.15);transform:skewX(-20deg)}
+.pn .stats i.on{background:var(--red)}
+.pn.red{background:var(--red)} .pn.red .sil svg{fill:var(--blk)} .pn.red .no{color:var(--wht)} .pn.red .role{background:var(--blk)} .pn.red .stats{color:var(--wht)} .pn.red .stats i.on{background:var(--wht)}
+.pn.unk{background:#161616}
+.pn.unk .sil svg{fill:#2c2c2c;filter:url(#static)}
+.pn.unk .no{color:#555}
+.pn.unk .nm{background:var(--wht);color:var(--blk)}
+.pn.unk .role{background:#333}
+.pn.lock{flex:0 0 calc(var(--u)*9);background:var(--blk);border-color:var(--red)}
+.pn.lock .q{position:absolute;inset:0;display:grid;place-items:center;font-family:Anton;font-size:calc(var(--u)*12);color:var(--red)}
+.pn .flash{position:absolute;inset:0;background:var(--wht);opacity:0;pointer-events:none}
+.denied{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-8deg);font-family:Anton;font-size:calc(var(--u)*9);color:var(--wht);
+  background:var(--red);padding:.1em .5em;white-space:nowrap;opacity:0;z-index:20;pointer-events:none;box-shadow:calc(var(--u)*1) calc(var(--u)*1) 0 var(--blk)}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <filter id="static"><feTurbulence id="stN" type="fractalNoise" baseFrequency="0.02 0.6" numOctaves="1" seed="1" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="22" xChannelSelector="R" yChannelSelector="G"/></filter>
+</defs></svg>
+<div id="stage">
+  <div class="bg"></div><div class="rays"></div><div class="dots"></div>
+
+  <section id="lines" class="sc"></section>
+
+  <section id="title" class="sc">
+    <div class="slab"></div>
+    <div class="caseid mono">CASE No.00263893</div>
+    <div class="bigzh" id="bigzh"></div>
+    <div class="bigen" id="bigen">BLACK BOX</div>
+    <div class="card" id="ccard">
+      <div class="h"><span>CALLING CARD</span><span>预告函</span></div>
+      <div class="b">来找我吧，侦探。</div>
+      <div class="s">——<i></i></div>
+    </div>
+    <div class="start" id="start">START ▶<small>开始调查</small></div>
+  </section>
+
+  <section id="select" class="sc">
+    <div class="sbg"></div><div class="band"></div>
+    <div class="top"><div class="t1">SELECT TARGET</div><div class="t2">选择调查对象</div></div>
+    <div class="panels" id="panels"></div>
+    <div class="denied" id="denied">ACCESS DENIED</div>
+  </section>
+
+  <div class="wipe" id="wipe"></div>
+</div>
+<div class="hint mono">R · REPLAY</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const U = () => Math.min(innerHeight / 100, innerWidth * .0056);
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = a => a[Math.random() * a.length | 0];
+
+/* ---------- 勒索信拼贴：每个字从不同的杂志上剪下来 ---------- */
+const STY = {
+  paper: 'background:#F4F1E9;color:#0A0A0A;font-family:"Noto Serif SC";font-weight:900',
+  ink:   'background:#0A0A0A;color:#F4F1E9;font-family:"Noto Sans SC";font-weight:900',
+  red:   'background:#E3121C;color:#F4F1E9;font-family:"ZCOOL QingKe HuangYou"',
+  brush: 'background:#F4F1E9;color:#E3121C;font-family:"Ma Shan Zheng"',
+  hollow:'background:#0A0A0A;color:#0A0A0A;-webkit-text-stroke:.05em #F4F1E9;font-family:"Noto Sans SC";font-weight:900',
+};
+function ransom(text, pool) {
+  let last = '';
+  return [...text].map(ch => {
+    if ('，。——'.includes(ch)) return `<span class="rt" style="${STY.paper};font-size:.6em">${ch}</span>`;
+    let k; do { k = pick(pool); } while (k === last && pool.length > 1); last = k;
+    return `<span class="rt" style="${STY[k]};font-size:${rnd(.85, 1.2).toFixed(2)}em;rotate:${rnd(-9, 9).toFixed(1)}deg;translate:0 ${rnd(-.08, .08).toFixed(2)}em">${ch}</span>`;
+  }).join('');
+}
+const LINES = [
+  { t: '有人，正在撬动这个世界。', w: 0, r: -5 },
+  { t: '三套交易系统。', w: 1, r: 4 },
+  { t: '一笔来路不明的资金。', w: 0, r: -3 },
+  { t: '一群只有代号的人。', w: 1, r: 5 },
+  { t: '以及——', w: 0, r: -4 },
+];
+$('#lines').innerHTML = LINES.map((l, i) =>
+  `<div class="banner ${l.w ? 'w' : ''}" id="ln${i}" style="rotate:${l.r}deg"><div class="shape"></div><div class="txt">${ransom(l.t, l.w ? ['ink', 'red', 'brush', 'ink'] : ['paper', 'red', 'brush', 'hollow'])}</div></div>`).join('') +
+  `<div class="banner" id="him" style="rotate:-3deg"><div class="shape"></div><div class="txt" style="font-size:calc(var(--u)*22)"><span class="rt" style="${STY.paper}">他</span></div>
+   <div class="rt mono" id="unk" style="position:absolute;left:50%;top:50%;translate:-50% -50%;rotate:-14deg;background:#E3121C;color:#F4F1E9;font-family:Anton;font-size:calc(var(--u)*7);padding:.05em .4em;white-space:nowrap">UNKNOWN</div></div>`;
+$('#bigzh').innerHTML = `<span class="rt" style="${STY.paper};rotate:-6deg">黑</span><span class="rt" style="${STY.ink};rotate:5deg;outline:calc(var(--u)*.4) solid #F4F1E9">箱</span>`;
+
+/* ---------- 调查对象 ---------- */
+const MEMBERS = [
+  { no: '01', name: 'LUNA', kind: 'luna', role: '执行者', cls: '', stats: [['执行', 5], ['隐匿', 3], ['威胁', 4]] },
+  { no: '02', name: 'HOUND', kind: 'hound', role: '嗅探者', cls: 'red', stats: [['嗅觉', 5], ['速度', 4], ['威胁', 3]] },
+  { no: '03', name: '武器大师', kind: 'smith', role: '休眠中', cls: '', zh: 1, stats: [['火力', 5], ['耐久', 4], ['活跃', 1]] },
+  { no: '04', name: '???', kind: 'unknown', role: '未解锁', cls: 'unk', stats: [['？？', 0], ['？？', 0], ['？？', 0]] },
+  { no: '05', name: '???', kind: 'unknown', role: '未解锁', cls: 'unk', stats: [['？？', 0], ['？？', 0], ['？？', 0]] },
+];
+$('#panels').innerHTML = MEMBERS.map((m, i) => `
+  <div class="pn ${m.cls}" data-i="${i}"><div class="in">
+    <div class="sil">${FIG.svg(m.kind, { h: 300 })}</div>
+    <div class="no">No.${m.no}</div>
+    <div class="nm ${m.zh ? 'zh' : ''}">${m.name}</div>
+    <div class="role">${m.role}</div>
+    <div class="stats">${m.stats.map(([k, v]) => `<div><b>${k}</b>${[0, 1, 2, 3, 4].map(j => `<i class="${j < v ? 'on' : ''}"></i>`).join('')}</div>`).join('')}</div>
+  </div><div class="flash"></div></div>`).join('') +
+  `<div class="pn lock" data-i="5"><div class="in"><div class="q">?</div></div><div class="flash"></div></div>`;
+
+setInterval(() => $('#stN').setAttribute('seed', Math.random() * 999 | 0), 90);
+
+/* ---------- 时间线 ---------- */
+let state = 'intro';
+const shake = (at, amt = 1) => tl.fromTo('#stage', { x: () => U() * 1.4 * amt, y: () => -U() * .8 * amt }, { x: 0, y: 0, duration: .35, ease: 'elastic.out(1,.3)' }, at);
+const tl = gsap.timeline({ paused: true });
+tl.set('#lines', { visibility: 'visible' })
+  .fromTo('#wipe', { clipPath: 'polygon(-30% 0%,100% 0%,100% 100%,0% 100%)' }, { clipPath: 'polygon(100% 0%,100% 0%,100% 100%,130% 100%)', duration: .5, ease: 'power4.inOut' }, .3);
+
+let at = .7;
+LINES.forEach((l, i) => {
+  const id = '#ln' + i;
+  tl.set(id, { visibility: 'visible' }, at)
+    .fromTo(id + ' .shape', { scaleX: 0, transformOrigin: i % 2 ? 'right' : 'left' }, { scaleX: 1, duration: .22, ease: 'power4.out' }, at)
+    .fromTo(id + ' .rt', { scale: 2.6, opacity: 0, rotation: () => rnd(-40, 40) }, { scale: 1, opacity: 1, rotation: 0, duration: .32, ease: 'back.out(2.2)', stagger: .045 }, at + .1);
+  shake(at + .1 + .045 * [...l.t].length, .7);
+  at += .45 + .045 * [...l.t].length + (i === 4 ? .5 : .75);
+  tl.to(id, { x: () => (i % 2 ? -1 : 1) * innerWidth * 1.2, rotation: i % 2 ? -12 : 12, duration: .3, ease: 'power3.in' }, at - .25)
+    .set(id, { visibility: 'hidden' }, at + .05);
+});
+tl.set('#him', { visibility: 'visible' }, at)
+  .fromTo('#him .shape', { scale: 0 }, { scale: 1, duration: .25, ease: 'power4.out' }, at)
+  .fromTo('#him .txt .rt', { scale: 3, opacity: 0 }, { scale: 1, opacity: 1, duration: .3, ease: 'back.out(2)' }, at + .05)
+  .fromTo('#unk', { scale: 3, opacity: 0 }, { scale: 1, opacity: 1, duration: .22, ease: 'power4.in' }, at + 1.0);
+shake(at + 1.22, 1.6);
+at += 2.1;
+// 标题
+tl.set('#him', { visibility: 'hidden' }, at)
+  .set('#title', { visibility: 'visible' }, at)
+  .from('#title .slab', { scaleX: 0, transformOrigin: 'left', duration: .3, ease: 'power4.out' }, at)
+  .from('#bigen', { xPercent: -120, duration: .45, ease: 'power4.out' }, at + .15)
+  .from('#bigzh .rt', { scale: 3, opacity: 0, rotation: () => rnd(-30, 30), duration: .3, ease: 'back.out(2)', stagger: .12 }, at + .5);
+shake(at + .8, 1.2);
+tl.from('.caseid', { x: () => -U() * 40, opacity: 0, duration: .3, ease: 'power3.out' }, at + 1.0)
+  .from('#ccard', { rotationY: 90, x: () => U() * 30, opacity: 0, duration: .5, ease: 'back.out(1.6)' }, at + 1.4)
+  .to('#start', { opacity: 1, duration: .01 }, at + 2.3)
+  .call(() => { state = 'ready'; gsap.to('#start', { opacity: .25, duration: .45, repeat: -1, yoyo: true, ease: 'steps(1)' }); }, null, at + 2.4);
+const TITLE_AT = at;
+
+const SHOT = new URLSearchParams(location.search).get('shot');
+(SHOT ? document.fonts.ready.then(() => new Promise(r => setTimeout(r, 1500))).then(() => document.fonts.ready)
+      : Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 2500))]))
+  .then(() => setTimeout(() => SHOT ? shot(SHOT) : tl.play(), 300));
+
+/* ---------- 进入选择界面 ---------- */
+function goSelect() {
+  state = 'select';
+  gsap.killTweensOf('#start');
+  const t = window.__t = gsap.timeline();
+  t.fromTo('#wipe', { clipPath: 'polygon(0% 0%,0% 0%,0% 100%,0% 100%)' }, { clipPath: 'polygon(0% 0%,110% 0%,100% 100%,0% 100%)', duration: .3, ease: 'power4.in' })
+   .set('#title', { visibility: 'hidden' }).set('#select', { visibility: 'visible' })
+   .to('#wipe', { clipPath: 'polygon(100% 0%,110% 0%,100% 100%,100% 100%)', duration: .35, ease: 'power4.out' })
+   .from('.top', { x: () => -U() * 60, duration: .35, ease: 'power4.out' }, '-=.2')
+   .from('.pn', { yPercent: 110, duration: .45, ease: 'back.out(1.4)', stagger: .07 }, '-=.3');
+}
+
+/* 悬停：选中的格子撑开，其他暗下去 */
+$('#panels').addEventListener('mouseover', e => {
+  const p = e.target.closest('.pn');
+  if (!p || state !== 'select' || p === $('#panels')._cur) return;
+  $('#panels')._cur = p;
+  const i = +p.dataset.i;
+  gsap.fromTo(p.querySelector('.flash'), { opacity: .8 }, { opacity: 0, duration: .3, ease: 'power2.out' });
+  if (i === 5) {
+    gsap.fromTo(p, { x: -U() * 1 }, { x: 0, duration: .4, ease: 'elastic.out(1,.2)' });
+    gsap.fromTo('#denied', { opacity: 1, scale: 1.6 }, { scale: 1, duration: .25, ease: 'power4.out', overwrite: true });
+    gsap.to('#denied', { opacity: 0, duration: .2, delay: .9 });
+    return;
+  }
+  $$('.pn:not(.lock)').forEach(o => {
+    const on = o === p;
+    gsap.to(o, { flexGrow: on ? 2.4 : .8, filter: on ? 'brightness(1)' : 'brightness(.45)', duration: .45, ease: 'power3.out', overwrite: 'auto' });
+    gsap.to(o.querySelector('.sil'), { scale: on ? 1.18 : 1, duration: .45, ease: 'power3.out', overwrite: 'auto' });
+    gsap.to(o.querySelector('.stats'), { opacity: on ? 1 : 0, duration: .25, overwrite: 'auto' });
+  });
+  if (MEMBERS[i].kind === 'unknown') gsap.fromTo(p.querySelector('.nm'), { x: -U() * 1.2 }, { x: 0, duration: .5, ease: 'elastic.out(1,.2)' });
+});
+$('#panels').addEventListener('mouseleave', () => {
+  $('#panels')._cur = null;
+  $$('.pn:not(.lock)').forEach(o => {
+    gsap.to(o, { flexGrow: 1, filter: 'brightness(1)', duration: .45, ease: 'power3.out', overwrite: 'auto' });
+    gsap.to(o.querySelector('.sil'), { scale: 1, duration: .45, overwrite: 'auto' });
+    gsap.to(o.querySelector('.stats'), { opacity: 0, duration: .2, overwrite: 'auto' });
+  });
+});
+
+addEventListener('click', () => {
+  if (state === 'intro' && tl.time() < TITLE_AT) tl.seek(TITLE_AT + .01);
+  else if (state === 'ready') goSelect();
+});
+/* ?shot=xxx：定格到某一帧，给 README 截图用 */
+function finishAll() { gsap.globalTimeline.getChildren(false, true, true).forEach(x => { if (x !== tl && x.repeat() !== -1) x.progress(1); }); }
+function shot(n) {
+  const at = { line: 1.9, him: TITLE_AT - 0.5, title: tl.duration() }[n];
+  if (at !== undefined) { tl.seek(at); return; }
+  tl.seek(tl.duration()); state = 'ready'; goSelect(); window.__t.progress(1); finishAll();
+  $$('.pn')[1].dispatchEvent(new MouseEvent('mouseover', { bubbles: true })); finishAll();
+}
+addEventListener('keydown', e => { if (e.key === 'r' || e.key === 'R') location.reload(); });
+</script>
+</body>
+</html>

@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>▮▮▮▮▮▮</title>
 <link rel="stylesheet" href="hub.css">
+<link rel="preload" href="assets/s-plate-k.jpg" as="image" fetchpriority="high">
 <link rel="preload" href="fonts/Anton-400-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/SpaceMono-700-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="fonts.css">
@@ -65,6 +66,13 @@
   .thread .line { fill: none; stroke: var(--red); stroke-width: 3.2; stroke-linecap: round; filter: drop-shadow(0 0 5px rgba(229, 7, 26, .8)); }
   .thread .cap { fill: var(--red); stroke: var(--paper); stroke-width: 2.4; opacity: 0; filter: drop-shadow(0 0 8px rgba(229, 7, 26, .9)); }
 
+  /* 启动画面：墙和人物还在路上时，不是一片死黑。加载很快（<0.4 秒）就根本看不见它。 */
+  #boot { position: fixed; inset: 0; z-index: 100; background: #000; display: grid; place-content: center; justify-items: center; gap: 16px; transition: opacity .5s .1s; }
+  #boot span { font: 700 13px/1 'Space Mono', monospace; letter-spacing: .38em; color: rgba(242, 239, 232, .72); opacity: 0; animation: bootIn .3s .4s forwards; }
+  #boot i { width: min(240px, 50vw); height: 2px; background: linear-gradient(90deg, transparent, #e5071a, transparent); opacity: 0; animation: bootIn .3s .4s forwards, bootScan 1.1s ease-in-out infinite; }
+  @keyframes bootIn { to { opacity: 1 } }
+  @keyframes bootScan { 0%, 100% { transform: translateX(-45%) scaleX(.4) } 50% { transform: translateX(45%) scaleX(1) } }
+  html.ready #boot { opacity: 0; pointer-events: none; }
   .vignette { position: fixed; inset: 0; pointer-events: none;
     background: radial-gradient(ellipse at 50% 55%, transparent 52%, rgba(0, 0, 0, .55) 100%); }
   /* 性能（量过）：每帧被 JS 挪动的图层必须单独开合成层，否则每一帧都要把里面所有的滤镜（模糊、阴影）重画一遍。
@@ -255,6 +263,7 @@
 </style>
 </head>
 <body>
+<div id="boot" aria-hidden="true"><span>CONNECTING</span><i></i></div>
 
 <main>
   <div class="scene" id="scene"></div>
@@ -277,7 +286,7 @@
 <div class="flash" id="flash"></div>
 <section class="hub" id="hub" aria-label="Suspects">
   <div class="hub-wall" aria-hidden="true"><div class="wall-camera" id="wallCamera"><img class="wall-plate" src="assets/s-plate-k.jpg" alt=""><i class="wall-light light-left"></i><i class="wall-light light-right" id="hubLamp"></i></div><div class="wall-veil"></div><div class="wall-shade"></div></div>
-  <div class="hub-scraps" aria-hidden="true"><img class="hub-scrap scrap-one" src="assets/pnl-06.webp" alt=""><img class="hub-scrap scrap-two" src="assets/pnl-17.webp" alt=""><img class="hub-scrap scrap-three" src="assets/pnl-23.webp" alt=""></div>
+  <div class="hub-scraps" aria-hidden="true"><img fetchpriority="low" decoding="async" class="hub-scrap scrap-one" src="assets/pnl-06.webp" alt=""><img fetchpriority="low" decoding="async" class="hub-scrap scrap-two" src="assets/pnl-17.webp" alt=""><img fetchpriority="low" decoding="async" class="hub-scrap scrap-three" src="assets/pnl-23.webp" alt=""></div>
   <div class="hub-flow" id="hubFlow">
     <header class="hub-header" id="hubHeader"><h1 class="hub-title"><span>SUSPECTS</span></h1><p class="hub-ref">CASE_FILE.DAT / MEMBERS</p></header>
     <div class="poster-stage" id="posterStage" aria-label="Suspect posters">
@@ -314,7 +323,7 @@
 <script src="vendor/Draggable.min.js"></script>
 <script src="vendor/InertiaPlugin.min.js"></script>
 <script src="sfx.js"></script>
-<script src="hub.js"></script>
+<script>if (/[?&]hub=/.test(location.search)) document.write('<script src="hub.js"><\/script>');   // 开发用的直达开关需要它同步加载；正常访问时 hub.js 延后加载（见下面）</script>
 <script src="panels.js"></script>
 <script src="scene.js"></script>
 <script>
@@ -336,14 +345,25 @@
   } });
 
   /* ---------- 入场 ---------- */
-  const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+  const tl = gsap.timeline({ defaults: { ease: 'power3.out' }, paused: true });   // 先暂停：墙和人物就绪（Scene.ready）才开场
   tl.to(scene, { opacity: 1, duration: reduce ? .01 : 1.6, ease: 'power1.inOut' }, 0)
     .fromTo('.tag.granted', { opacity: 0, scale: .2, transformOrigin: '0% 50%' }, { opacity: 1, scale: 1, duration: .55, ease: 'back.out(2.4)' }, .35)
     .fromTo('.tag.crack',   { opacity: 0, scale: .2, transformOrigin: '0% 50%' }, { opacity: 1, scale: 1, duration: .55, ease: 'back.out(2.4)' }, .5)
     .fromTo('.bar',         { opacity: 0, scaleX: 0 },         { opacity: 1, scaleX: 1, duration: .5 }, .62)
     .to('.meta', { opacity: 1, duration: .6 }, 1.0)
     .fromTo('#enter',  { opacity: 0, scale: .35 }, { opacity: 1, scale: 1, duration: .6, ease: 'back.out(2.6)' }, 2.3);
-  if (reduce) tl.progress(1);
+  window.Scene.ready.then(() => { performance.mark('scene-ready'); document.documentElement.classList.add('ready'); if (reduce) tl.progress(1); else tl.play(0); });
+
+  /* 列队页（hub.js）延后加载：它一启动就会请求 4 张大海报（1.6 MB），和首页抢带宽。
+     首页稳定后 2.5 秒、或鼠标靠近 / 点击 ENTER 时再取；点得再快，openHub 也会等它加载完。 */
+  let hubLoading;
+  const loadHub = () => hubLoading || (hubLoading = new Promise((res) => {
+    if (window.BB) return res();
+    const s = document.createElement('script'); s.src = 'hub.js'; s.onload = res; s.onerror = res; document.body.append(s);
+  }));
+  const openHub = () => loadHub().then(() => window.BB && window.BB.openHub());
+  window.Scene.ready.then(() => setTimeout(loadHub, 2500));
+  ['pointerenter', 'focus', 'pointerdown', 'touchstart'].forEach((ev) => enterBtn.addEventListener(ev, loadHub, { once: true, passive: true }));
 
   /* ---------- 回访：只用本机 localStorage，不上传任何东西 ---------- */
   try {
@@ -399,7 +419,7 @@
         .to(h1, { x: nx * dist, y: ny * dist, rotation: 3, duration: .8, ease: 'power4.inOut' }, .3)
         .to(h2, { x: -nx * dist, y: -ny * dist, rotation: -3, duration: .8, ease: 'power4.inOut' }, '<')
         .to([slashLine, slashGlow], { opacity: 0, duration: .35 }, .45)
-        .add(() => window.BB.openHub(), .42);                                            // 一边裂开，一边把嫌疑人列队推上来
+        .add(() => openHub(), .42);                                            // 一边裂开，一边把嫌疑人列队推上来
     });
   }
 
@@ -408,7 +428,7 @@
     if (busy) return; busy = true;
     const done = () => { busy = false; };
     window.SFX.whoosh();
-    if (reduce) { main.style.display = 'none'; window.BB.openHub(); done(); return; }
+    if (reduce) { main.style.display = 'none'; openHub(); done(); return; }
     slice(done);
   });
 })();

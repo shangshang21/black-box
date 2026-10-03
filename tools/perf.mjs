@@ -28,14 +28,19 @@ const evalJS = async (expr) => { const r = await send('Runtime.evaluate', { expr
 
 await send('Page.enable'); await send('Runtime.enable'); await send('Performance.enable');
 await send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: DPR, mobile: false });
+if (process.env.THROTTLE) { const [mbps, lat] = process.env.THROTTLE.split(',').map(Number); await send('Network.enable'); await send('Network.emulateNetworkConditions', { offline: false, latency: lat, downloadThroughput: mbps * 1024 * 1024 / 8, uploadThroughput: mbps * 1024 * 1024 / 8 }); await send('Network.setCacheDisabled', { cacheDisabled: true }); console.log(`限速：${mbps} Mbps，延迟 ${lat} ms，关闭缓存`); }
 const loaded = new Promise((res) => listeners.push((d) => d.method === 'Page.loadEventFired' && res()));
 const t0 = Date.now(); await send('Page.navigate', { url: URL_ }); await loaded;
 console.log(`load event: ${Date.now() - t0} ms  (${W}x${H} @${DPR}x)`);
 await sleep(3500);   // 让开场动画走完
 if (process.env.LOADINFO) {
   const info = await evalJS(`(() => { const rs = performance.getEntriesByType('resource'); const by = {}; rs.forEach((r) => { const h = new URL(r.name).host; by[h] = by[h] || { n: 0, kb: 0, end: 0 }; by[h].n++; by[h].kb += Math.round((r.encodedBodySize || 0) / 1024); by[h].end = Math.max(by[h].end, Math.round(r.responseEnd)); });
+    const end = (k) => { const r = rs.find((x) => x.name.includes(k)); return r ? Math.round(r.responseEnd) : null; };
+    const charRes = rs.find((x) => x.name.includes('-char.webp'));
+    const key = { plate: end('s-plate-k'), character: charRes ? Math.round(charRes.responseEnd) : null, firstPanel: end('pnl-'), firstPoster: end('/poster-'), hubPoster: end('hub-poster') };
+    const lastEnd = Math.round(Math.max(...rs.map((r) => r.responseEnd)));
     const slow = rs.slice().sort((a, b) => b.responseEnd - a.responseEnd).slice(0, 8).map((r) => r.name.split('/').slice(-2).join('/').slice(0, 60) + ' end=' + Math.round(r.responseEnd) + 'ms dur=' + Math.round(r.duration));
-    const n = performance.getEntriesByType('navigation')[0]; return { by, slow, dcl: Math.round(n.domContentLoadedEventEnd), load: Math.round(n.loadEventEnd), fcp: Math.round(performance.getEntriesByName('first-contentful-paint')[0]?.startTime || 0) }; })()`);
+    const n = performance.getEntriesByType('navigation')[0]; const sr = performance.getEntriesByName('scene-ready')[0]; return { timeline: rs.slice().sort((x, y) => x.startTime - y.startTime).map((r) => Math.round(r.startTime) + '→' + Math.round(r.responseEnd) + '  ' + r.name.split('/').slice(-1)[0]).slice(0, 60), sceneReady: sr ? Math.round(sr.startTime) : null, key, lastEnd, by, slow, dcl: Math.round(n.domContentLoadedEventEnd), load: Math.round(n.loadEventEnd), fcp: Math.round(performance.getEntriesByName('first-contentful-paint')[0]?.startTime || 0) }; })()`);
   console.log(JSON.stringify(info, null, 1));
   process.exit(0);
 }

@@ -52,6 +52,9 @@
   const sceneEl = document.getElementById('scene');
   const enterBtn = document.getElementById('enter');
   const el = (tag, cls, parent) => { const e = document.createElement(tag); if (cls) e.className = cls; (parent || sceneEl).append(e); return e; };
+  // 分批加载：不是最要紧的图先不请求，等墙和人物到了再放行（否则几十张图一起抢带宽，最重要的人物反而最后到：限速 5 Mbps 实测 7 秒）
+  const late = [];
+  const defer = (img, url, group) => { late.push({ img, url, group }); };
   const svgEl = (tag, attrs, parent) => { const e = document.createElementNS('http://www.w3.org/2000/svg', tag); Object.entries(attrs || {}).forEach(([k, v]) => e.setAttribute(k, v)); parent.append(e); return e; };
 
   /* ---------- 图层 ---------- */
@@ -95,8 +98,9 @@
     const bx = jit(s.x, 10);
     pst.style.cssText = `left:${bx.toFixed(1)}px;top:${jit(s.y, 10).toFixed(1)}px;width:${w.toFixed(1)}px;z-index:${20 + Math.floor(Math.random() * 3)}`;
     const sh = el('img', 'sh', pin), pp = el('img', 'pp', pin), tape = el('img', 'tape', pin);
-    sh.src = pp.src = `assets/poster-${s.n}.webp`; sh.alt = pp.alt = ''; sh.draggable = pp.draggable = false;
-    tape.src = 'assets/stk-tape.webp'; tape.alt = ''; tape.draggable = false;
+    defer(sh, `assets/poster-${s.n}.webp`, 'poster'); defer(pp, `assets/poster-${s.n}.webp`, 'poster'); sh.alt = pp.alt = ''; sh.draggable = pp.draggable = false;
+    defer(tape, 'assets/stk-tape.webp', 'poster'); tape.alt = ''; tape.draggable = false;
+    gsap.set(pst, { opacity: 0 }); gsap.set(tape, { opacity: 0 });                 // 图到了、开场轮到它，才露面
     tape.style.cssText = `left:${s.tape.x}%;top:${s.tape.y}%;width:${s.tape.w}%;transform:rotate(${s.tape.r}deg)`;
     // 悬停：像用手指把它翘起来看一眼——放大、影子拉长；z-index 抬到最上
     pst.addEventListener('pointerenter', () => { pst.style.zIndex = 40; gsap.to(pin, { scale: 1.07, x: -2, y: -4, duration: .3, ease: 'power3.out', overwrite: 'auto' }); gsap.to(sh, { x: 9, y: 13, opacity: .62, duration: .3, overwrite: 'auto' }); });
@@ -104,7 +108,7 @@
     gsap.set(pst, { rotation: rot, transformOrigin: '50% 40%' }); gsap.set(sh, { x: 5, y: 8 });
     return { pst, sw, pp, sh, tape, rot, bx, w, hero: k === C.poster };
   });
-  const decor = DECOR.map((d) => { const im = el('img', 'stk', wallNear), bx = jit(d.x, 8); im.src = d.src; im.alt = ''; im.style.cssText = `left:${bx.toFixed(1)}px;top:${jit(d.y, 8).toFixed(1)}px;width:${d.w}px;--r:${jit(d.r, 2).toFixed(2)}deg`; return { im, bx, w: d.w }; });
+  const decor = DECOR.map((d) => { const im = el('img', 'stk', wallNear), bx = jit(d.x, 8); defer(im, d.src, 'poster'); im.alt = ''; im.style.cssText = `left:${bx.toFixed(1)}px;top:${jit(d.y, 8).toFixed(1)}px;width:${d.w}px;--r:${jit(d.r, 2).toFixed(2)}deg`; return { im, bx, w: d.w }; });
   posters[C.poster].pst.classList.add('me');                  // 站在前面的这位，他的海报亮一点，其余的暗一点
 
   /* ---------- 分镜墙：把 GPT 画的小分镜一张张贴满墙面 ----------
@@ -128,25 +132,26 @@
       if (w / ar > 150) w = 150 * ar;
       const rot = (Math.random() - .5) * 18, bx = cell.cx - w / 2, by = cell.cy - w / ar / 2;
       const box = el('div', 'pnl', far ? wallFar : wallNear), sw = el('div', 'psw', box), im = el('img', null, sw);
-      im.src = 'assets/' + d.f; im.alt = ''; im.draggable = false;
+      defer(im, 'assets/' + d.f, 'panel'); im.alt = ''; im.draggable = false;
       const b = far ? .5 + Math.random() * .22 : .8 + Math.random() * .2;
       box.style.cssText = `left:${bx.toFixed(1)}px;top:${by.toFixed(1)}px;width:${w.toFixed(1)}px;z-index:${far ? 1 + (n % 4) : 4 + (n % 6)}`;
       im.style.filter = `brightness(${b.toFixed(2)}) drop-shadow(2px 3px 0 rgba(0,0,0,.55)) drop-shadow(0 4px 7px rgba(0,0,0,.5))`;
       if (Math.random() < .34) {                                                       // 三分之一的分镜用一小条胶带粘着
-        const tp = el('img', 'ptape', box); tp.src = 'assets/stk-tape.webp'; tp.alt = ''; tp.draggable = false;
+        const tp = el('img', 'ptape', box); defer(tp, 'assets/stk-tape.webp', 'panel'); tp.alt = ''; tp.draggable = false;
         tp.style.cssText = `left:${10 + Math.random() * 55}%;top:-5%;width:${26 + Math.random() * 10}%;transform:rotate(${(Math.random() - .5) * 60}deg)`;
       }
       gsap.set(box, { rotation: rot, transformOrigin: '50% 50%' });
       box.addEventListener('pointerenter', () => { box.style.zIndex = 30; gsap.to(box, { scale: 1.06, rotation: rot * .85, duration: .3, ease: 'power3.out', overwrite: 'auto' }); });
       box.addEventListener('pointerleave', () => { gsap.to(box, { scale: 1, rotation: rot, duration: .35, ease: 'power3.out', overwrite: 'auto' }); setTimeout(() => { box.style.zIndex = far ? 1 + (n % 4) : 4 + (n % 6); }, 350); });
-      panels.push({ el: box, sw, bx, w, rot, far });
+      gsap.set(box, { opacity: 0 });
+      panels.push({ el: box, sw, im, bx, w, rot, far });
     });
   })();
 
   // 开场：海报一张张被"啪"地贴上墙。从高处拍下来（放大 → 落下），影子随之收紧，墙面轻轻一震，胶带最后冒出来。站着的那位最后贴。
   function slapOn() {
     const order = posters.map((_, i) => i).filter((i) => i !== C.poster).sort(() => Math.random() - .5).concat(C.poster);
-    const tl = gsap.timeline({ delay: 1.1 + panels.length * .05 });
+    const tl = gsap.timeline({ delay: .3 });
     order.forEach((i, n) => {
       const p = posters[i], t = n * .5;
       gsap.set(p.pst, { opacity: 0 });
@@ -160,14 +165,9 @@
       gsap.set(p.tape, { opacity: 0 });
     });
   }
-  function panelsOn() {                                       // 分镜先快速贴满：先远层后近层，像有人一把按上去
-    const tl = gsap.timeline({ delay: .7 });
-    panels.slice().sort((a, b) => (b.far - a.far)).forEach((p, n) => {
-      gsap.set(p.el, { opacity: 0 });
-      tl.fromTo(p.el, { opacity: 0, scale: 1.45, rotation: p.rot + (Math.random() < .5 ? -7 : 7) }, { opacity: 1, scale: 1, rotation: p.rot, duration: .32, ease: 'back.out(1.7)' }, n * .05);
-    });
+  function enterPanel(p, delay) {                              // 一张分镜到货了：自己"啪"地贴上去
+    gsap.fromTo(p.el, { opacity: 0, scale: 1.45, rotation: p.rot + (Math.random() < .5 ? -7 : 7) }, { opacity: 1, scale: 1, rotation: p.rot, duration: .32, ease: 'back.out(1.7)', delay });
   }
-  if (reduce) { posters.forEach((p) => { gsap.set(p.pst, { opacity: 1 }); }); } else { panelsOn(); slapOn(); }
 
   const figPar = el('div', 'L lyr');                              // 人物组（视差幅度中等）
   const figWrap = el('div', 'fig-wrap', figPar);              // 呼吸 / 微微摇晃作用在它身上
@@ -393,6 +393,24 @@
   layout();
   loaded.then(() => { placeFigure(); layout(); if (!reduce) startMotion(); });
 
+  /* ---------- 分批加载的流程 ----------
+     ① 先只有墙和人物在请求（约 0.6 MB）；② 它们到了，才放行海报、胶带、装饰（约 0.9 MB），并宣布 Scene.ready，首页的开场才开始放；
+     ③ 海报到了（最多等 1.8 秒）再放行 22 张分镜，每张到货自己贴上去；④ 海报到齐后，一张张"啪"地拍上墙，站着的那位最后。 */
+  const imgDone = (img) => new Promise((res) => { if (img.complete && img.naturalWidth) res(); else { img.addEventListener('load', res, { once: true }); img.addEventListener('error', res, { once: true }); } });
+  const within = (pr, ms) => Promise.race([pr, new Promise((r) => setTimeout(r, ms))]);
+  const group = (g) => late.filter((x) => x.group === g);
+  const release = (items) => items.forEach((x) => { x.img.src = x.url; });
+  const ready = within(Promise.all([imgDone(plate), imgDone(fig)]), 9000);
+  ready.then(() => {
+    release(group('poster'));
+    const postersIn = within(Promise.all(posters.map((p) => imgDone(p.pp))), 3500);
+    within(postersIn, 1800).then(() => {
+      release(group('panel'));
+      panels.forEach((p) => imgDone(p.im).then(() => { if (reduce) gsap.set(p.el, { opacity: 1 }); else enterPanel(p, Math.random() * .2); }));
+    });
+    postersIn.then(() => { if (reduce) posters.forEach((p) => { gsap.set(p.pst, { opacity: 1 }); gsap.set(p.tape, { opacity: 1 }); }); else slapOn(); });
+  });
+
   // 给首页转场用
-  window.Scene = { who: pick, threadScreen, pull, hideThread() { thread.style.visibility = 'hidden'; }, handScreen() { const r = hand.getBoundingClientRect(); return { x: r.left, y: r.top }; } };
+  window.Scene = { who: pick, ready: ready.then(() => {}), threadScreen, pull, hideThread() { thread.style.visibility = 'hidden'; }, handScreen() { const r = hand.getBoundingClientRect(); return { x: r.left, y: r.top }; } };
 })();

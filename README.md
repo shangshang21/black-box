@@ -2,102 +2,104 @@
 
 > 标题故意留白。代号 `black-box`。
 
-一个**游戏化叙事的前端实验**。访客扮演一名侦探，骇入一个神秘组织的内部系统，顺着已知成员留下的线索一层层往下查。最后发现，所有线索都指向同一个没有名字的人，而访客一路上看到的一切，都是那个人想让他看到的。
+一个**游戏化叙事的前端实验**：一个纯静态、不需要构建的网页。访客扮演一名侦探，骇入一个神秘组织的内部系统，顺着已知成员留下的线索往下查。线索一层层收拢，指向同一个没有名字的人，而访客一路上看到的一切，都是那个人早就准备好的。
 
-这个构思最初是给一个已经停用的 AI 交易项目做的前端。现在它只作为一个视觉叙事实验，跟任何真实系统都没有连接。
+它跟任何真实系统都没有连接。最初的构思是给一个已经停用的 AI 交易项目做前端，后来只保留了"故事"和"视觉"两件事。
 
-**当前状态：** 第一轮概念验证已完成，一共做了三个方向的切片，其中 **B（黑色电影）胜出**。项目暂停中。故事设定、设计原则、第一轮反馈和后续灵感都记在 [`docs/NOTES.md`](docs/NOTES.md) 里。
+**在线体验：** <https://shangshang21.github.io/black-box/v2/>（桌面浏览器效果最好；手机竖屏也做了适配）
+
+| | |
+|:--:|:--:|
+| ![首页 · Luna](docs/shots/v2/entry-luna.jpg) | ![首页 · Hound](docs/shots/v2/entry-hound.jpg) |
+| ![首页 · 武器大师](docs/shots/v2/entry-smith.jpg) | ![嫌疑人列队](docs/shots/v2/hub-live-desktop.jpg) |
 
 ---
 
-## 三个方向
+## 现在有什么（第二轮，`v2/`）
 
-三个切片讲的是同一个故事、同一群成员，只是讲法不同。每一版都包含"开场 → 标题 → 点击 → 成员页（鼠标悬停互动）"。
+**首页：** 一面涂鸦墙，三位成员里**随机站出一位**（每次打开不同，不会连续重复），像登场动画里的"神秘 boss"。墙上贴着二十多张小分镜和四张撕纸海报，每次打开从 30 张分镜里抽不同的，位置也会微微抖动。人物手里握着一根红线，垂到地上、拖向屏幕外；鼠标移到 `ENTER` 上，他们"放线"，红线绷到按键上；点下去，**画面沿着这根红线被撕开**，露出下一页。
 
-### B · 黑色电影 ✦ 第一轮胜出
+**嫌疑人列队：** 同一面墙，镜头走近。一张大海报是当前选中的成员，另外两位是小海报，旁边是一张贴着胶带的档案卡（编号、状态、代号、角色、最后修改时间、一条中文笔记）。三位成员都看完之后，右下角才会出现**第四个人**：一张只剩轮廓的海报，名字被涂黑，信号很弱。
 
-胶片颗粒、黑暗里的门缝光、被红线划掉的「他」。百叶窗的光扫过标题，最后进入警局的嫌疑人列队。
+| | | |
+|:--:|:--:|:--:|
+| ![列队，桌面](docs/shots/v2/hub-desktop.jpg) | ![第四个人出现](docs/shots/v2/hub-ghost-unlocked.jpg) | ![手机竖屏](docs/shots/v2/hub-live-phone.jpg) |
 
-**列队里有五个人，墙上却有六个影子。** 鼠标移到第六个影子上，它会闪开；等视线移走，它又慢慢回来。
+### 藏起来的东西（"蜜罐"）
 
-| | |
-|---|---|
-| ![B 开场](docs/shots/b2-him.jpg) | ![B 标题扫光](docs/shots/b3-title-sweep.jpg) |
-| ![B 标题](docs/shots/b4-title.jpg) | ![B 列队](docs/shots/b5-lineup.jpg) |
+整个站点本身就是一个蜜罐：访客以为自己在骇入，其实这个系统是为他搭的。伏笔藏在细节里，第一遍看像小 bug，看完再回想全是线索：
 
-### A · 剪纸片头
+- `ACCESS GRANTED` 在破解进度条走完之前就亮了：门本来就开着。
+- 每份档案的"最后修改时间"，永远是你打开它之前 3 秒。点一下这个时间，会多出一行 `OPENED`，两者刚好差 3 秒。
+- 第二次来访，页面会先对你说一句「你又来了。」（只用浏览器本地存储，不上传任何东西）。
+- 每份档案翻起右下角，纸背都有同一对订书钉的痕迹。
+- 档案卡翻角、红线尾巴上那枚小图钉，都可以点。
+- 在首页按 `P`，墙面会静悄悄地换成另一幅涂鸦（没有任何提示，找到的人才知道）。
 
-参考索尔·巴斯（Saul Bass）和《猫鼠游戏》片头的思路：纸张纹理，每秒 9 帧的逐帧抖动（boil），场景之间硬切，最后盖一个「绝密」印章。未知成员被做成卡片上剪掉的一个人形洞。
-
-| | |
-|---|---|
-| ![A 杠杆](docs/shots/a1-lever.jpg) | ![A 成员](docs/shots/a2-members.jpg) |
-| ![A 标题](docs/shots/a3-title.jpg) | ![A 名单](docs/shots/a4-list.jpg) |
-
-### C · 预告函
-
-勒索信拼贴字、放射线背景、屏幕震动。幕后之人给侦探寄来一张预告函，接着进入格斗游戏式的「SELECT TARGET」选择界面，最右边那一格永远 ACCESS DENIED。
+### 操作
 
 | | |
 |---|---|
-| ![C 开场](docs/shots/c1-line.jpg) | ![C 标题](docs/shots/c2-title.jpg) |
-| ![C 选择调查对象](docs/shots/c3-select.jpg) | |
+| 首页 | 鼠标移动：视差；移到 `ENTER`：红线绷紧；点击：撕开进入 |
+| 列队页 | 点小海报或底部 `01 / 02 / 03` 切换成员；方向键也可以；`BACK` 回首页；手机上左右滑动切换 |
+| 开发用网址参数 | `?c=luna\|hound\|smith` 指定首页角色；`?plate=e..l` 指定墙面；`?btn=a\|b\|c` 换 ENTER 按键样式 |
 
 ---
 
 ## 运行
 
-纯静态页面，不需要构建。
+纯静态，不需要构建，不依赖任何外部网络（动画库和字体都已放进仓库）。
 
 ```bash
-python3 -m http.server 3200
+python3 serve.py        # 带 no-cache 头的静态服务器，默认端口 3200
 ```
 
-然后打开 <http://localhost:3200>，建议全屏观看。
-
-- 点击任意处可以跳过开场，按 `R` 重播
-- 标题出现后，点击进入成员页，然后把鼠标慢慢移过每一个成员
-- 在网址后加 `?shot=名称` 可以定格到某一帧，README 里的截图就是这样生成的：
-  - B：`line` `him` `sweep` `title` `hover`
-  - A：`lever` `coins` `members` `him` `title` `list`
-  - C：`line` `him` `title` `select`
-
-截图命令（macOS + Chrome）：
-
-```bash
-"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --hide-scrollbars \
-  --window-size=1600,900 --virtual-time-budget=15000 \
-  --screenshot=out.png "http://localhost:3200/b-noir.html?shot=hover"
-```
+然后打开 <http://localhost:3200/v2/>。第一轮的三个概念切片还在根目录（`index.html`、`b-noir.html` 等），见 [`docs/NOTES.md`](docs/NOTES.md)。
 
 ---
 
 ## 怎么做的
 
-**全部用代码画出来，没有一张图片素材。** 每个页面大约三四百行 HTML、CSS 和 JS，动画编排用 [GSAP](https://gsap.com/)。
-
-| 效果 | 做法 |
+| 想看 | 去哪 |
 |---|---|
-| 人物剪影 | 手写的 SVG 贝塞尔曲线（`shared/figures.js`）。Luna 的新月发饰是两个圆相减得到的，交点坐标是算出来的 |
-| 百叶窗的光 | CSS 条纹渐变 + 柔边遮罩 + `mix-blend-mode: color-dodge`。颜色减淡模式会让"越亮的东西越亮"，所以光扫过时，文字比墙亮得多 |
-| 胶片颗粒 | 一块 canvas 每 42ms 重新撒一次随机噪点（约等于每秒 24 帧） |
-| 未知成员的虚影 | SVG 滤镜 `feTurbulence` + `feDisplacementMap`，每秒换 9 次噪声种子 |
-| 第六个影子 | 灯是"坏的"，只会偶尔闪一下，影子却一直都在。悬停时影子滑走并淡出，离开 1.6 秒后再慢慢回来 |
-| 剪纸质感 | SVG 噪声纸纹（`multiply` 混合）+ 无模糊的偏移投影 + 用 CSS 的独立 `translate` / `rotate` 属性做逐帧抖动，不跟 GSAP 的 `transform` 冲突 |
-| 定格动画 | GSAP 的 `steps(n)` 缓动 |
-| 勒索信拼贴 | 每个字随机套一种"杂志剪报"样式（不同字体、底色、旋转），相邻两个字不重复 |
-| 屏幕震动 | 对整个舞台做 `elastic.out` 回弹 |
+| 整个项目是怎么一轮一轮做出来的：设计决定、被推翻的方案、AI 分工和交叉评审的流程 | [`docs/PROCESS.md`](docs/PROCESS.md) |
+| 技术细节：图层结构、红线的物理、撕开转场、抠图流水线、性能排查（从 23 帧到 60 帧） | [`docs/TECHNICAL.md`](docs/TECHNICAL.md) |
+| 故事设定、设计原则、第一轮的反馈和灵感 | [`docs/NOTES.md`](docs/NOTES.md) |
 
-## 文件
+一句话版本：
+
+- **美术**由图像模型（GPT）生成，再用代码"贴"到页面上：背景墙、人物、分镜、海报都是图；字体排版、UI、动效、物理全是代码。
+- **美术指导和集成**由 Claude 负责；**第二页（列队页）的施工**交给 GPT 的编码模型，两边先互相提意见再动手。
+- **抠图**用"品红底 + 色键"：让模型把东西画在纯品红 `#FF00FF` 上，再用 [`tools/chroma-key.py`](tools/chroma-key.py) 抠成透明，头发丝之间的缝隙也能抠干净。
+- **性能**用 Chrome 调试协议实测（[`tools/perf.mjs`](tools/perf.mjs)），按 Retina 分辨率逐项关掉怀疑对象，而不是凭感觉。
+
+## 目录
 
 ```
-index.html            三个方向的目录页
-b-noir.html           B · 黑色电影
-a-cutpaper.html       A · 剪纸片头
-c-calling-card.html   C · 预告函
-shared/figures.js     成员剪影（Luna、Hound、武器大师、未知成员）
-docs/NOTES.md         故事设定、设计原则、第一轮反馈、后续灵感
-docs/shots/           截图
+v2/                 第二轮：首页 + 嫌疑人列队（当前版本）
+  index.html        首页的结构和样式、ENTER 的撕开转场
+  scene.js          首页场景：分层、红线（Verlet 绳子）、分镜墙、视差、微动
+  hub.js hub.css    嫌疑人列队
+  sfx.js            用 WebAudio 合成的轻微音效（没有音频文件）
+  fonts/ fonts.css  自托管字体（拉丁字母 + 中文子集）
+  vendor/           GSAP（动画库）
+  assets/           墙面、人物、海报、分镜、胶带贴纸
+tools/              抠图、拆图、字体子集、截图、帧率测量等脚本
+docs/               文档和截图
+serve.py            开发服务器
+a-*.html b-*.html c-*.html index.html shared/   第一轮的三个概念切片
 ```
 
-字体来自 Google Fonts（Noto Serif SC / Noto Sans SC / Special Elite / Anton 等），GSAP 来自 jsDelivr。
+## 已知的不足
+
+- 列队页的墙比首页更灰、更雾（压暗那一层偏重）。
+- 窄屏上中文笔记偶尔会留下一个字单独成行。
+- 列队页里的红线是画出来的路径，不像首页那样有物理。
+- 点 `ENTER` 撕开的那一刻，偶尔会有一帧 50–150 毫秒的停顿。
+- 第四个人被点开之后的"结局"（黑屋子、主控台）还没有做。
+
+## 致谢与许可
+
+- 动画库：[GSAP](https://gsap.com/) 3.15（GreenSock "no charge" 许可）。
+- 字体：Anton、Space Mono、Noto Serif SC，均为 SIL Open Font License。
+- 图片素材由图像模型生成。视觉上受《女神异闻录5》的 UI 语言、《Framed》的分镜叙事启发，没有使用任何它们的素材。

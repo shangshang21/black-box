@@ -286,37 +286,30 @@
 <div class="flash" id="flash"></div>
 <section class="hub" id="hub" aria-label="Suspects">
   <div class="hub-wall" aria-hidden="true"><div class="wall-camera" id="wallCamera"><img class="wall-plate" src="assets/s-plate-k.jpg" alt=""><i class="wall-light light-left"></i><i class="wall-light light-right" id="hubLamp"></i></div><div class="wall-veil"></div><div class="wall-shade"></div></div>
-  <div class="hub-scraps" aria-hidden="true"><img fetchpriority="low" decoding="async" class="hub-scrap scrap-one" src="assets/pnl-06.webp" alt=""><img fetchpriority="low" decoding="async" class="hub-scrap scrap-two" src="assets/pnl-17.webp" alt=""><img fetchpriority="low" decoding="async" class="hub-scrap scrap-three" src="assets/pnl-23.webp" alt=""></div>
   <div class="hub-flow" id="hubFlow">
     <header class="hub-header" id="hubHeader"><h1 class="hub-title"><span>SUSPECTS</span></h1><p class="hub-ref">CASE_FILE.DAT / MEMBERS</p></header>
-    <div class="poster-stage" id="posterStage" aria-label="Suspect posters">
-      <div class="poster-location hero-location" id="heroLocation"></div>
-      <div class="poster-location alt-location-a" id="altLocationA"></div>
-      <div class="poster-location alt-location-b" id="altLocationB"></div>
-      <div class="poster-location ghost-location" id="ghostLocation" hidden></div>
+    <div class="poster-stage" id="posterStage" aria-label="Suspect spread">
+      <div class="main-panel-location" id="mainPanel"><div class="panel-parallax" id="panelParallax"><div class="panel-shadow"></div><div class="panel-motion" id="panelMotion"><div class="panel-halves" id="panelHalves">
+        <div class="paper-half half-a" id="panelHalfA"><div class="panel-paper"><div class="panel-inner"><i class="inner-shade"></i><i class="panel-burst"></i><i class="panel-grain"></i></div></div><svg class="cut-edge cut-edge-light" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M0 77 L100 36"/></svg></div>
+        <div class="paper-half half-b" id="panelHalfB"><div class="panel-paper"><div class="panel-inner"><i class="inner-shade"></i><i class="panel-burst"></i><i class="panel-grain"></i></div></div><svg class="cut-edge cut-edge-shadow" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M0 77 L100 36"/></svg></div>
+      </div><i class="slice-fragment" id="sliceFragment"></i><i class="peel-corner" id="peelCorner"></i><svg class="seam" viewBox="0 0 100 100" preserveAspectRatio="none"><path class="cut-line" id="cutLine" d="M0 77 L100 36"/></svg></div></div></div>
+      <div class="hero-name-location" id="heroNameLocation"><h2 class="hero-name" id="heroName">LUNA</h2><p class="hero-role" id="heroRole">01 / EXECUTOR</p></div>
+      <div class="hero-location" id="heroLocation"><div class="hero-shadow-clip"><div class="hero-shadow" id="heroShadow"><img alt=""></div></div><div class="contact-layer" id="contactLayer"><i class="contact-shadow"></i><i class="contact-shadow"></i></div><div class="reflection" id="heroReflection"><img alt=""></div><div class="hero-parallax" id="heroParallax"><div class="hero-clip" id="heroClip"><div class="hero-motion" id="heroMotion"><img class="hero-art" id="heroArt" alt=""></div></div></div></div>
+      <div class="poster-location alt-location-a" id="altLocationA"></div><div class="poster-location alt-location-b" id="altLocationB"></div><div class="poster-location ghost-location" id="ghostLocation" hidden></div>
+      <div class="outgoing" id="outgoing"></div><div class="cut-in" id="cutIn" aria-hidden="true"><div class="cut-in-paper"><img id="cutInArt" alt=""></div></div>
     </div>
-    <div class="evidence-area" id="evidenceArea"><div class="dossier-drag" id="dossierDrag">
-      <article class="dossier" id="dossier" aria-label="Case file">
-        <div class="d-grip" id="dGrip" aria-hidden="true"></div><i class="d-pin" id="dPin" aria-hidden="true"></i>
-        <div class="d-head"><span id="dNo">FILE 01</span><span class="d-tag" id="dStatus">ACTIVE</span></div>
-        <dl>
-          <div class="d-row"><dt>CODENAME</dt><dd><span class="rv"><span id="dName">LUNA</span><i class="rb"></i></span></dd></div>
-          <div class="d-row"><dt>ROLE</dt><dd><span class="rv"><span id="dRole">EXECUTOR</span><i class="rb"></i></span></dd></div>
-          <div class="d-row"><dt>MODIFIED</dt><dd><span class="rv"><button class="modified-value" id="dMod" type="button">00:00:00</button><i class="rb"></i></span></dd></div>
-        </dl>
-        <p class="opened-clue" id="openedClue" aria-hidden="true"></p>
-        <dl><div class="d-row note"><dt>NOTE</dt><dd><span class="rv"><span id="dNote">执行者。她最近一次下单，是在三天前。</span><i class="rb"></i></span></dd></div></dl>
-        <footer class="d-footer"><span class="file-fragment" aria-hidden="true"></span><span class="stamp" id="stamp">EXAMINED</span></footer>
-        <span class="staple-scar" aria-hidden="true"></span><button class="corner-lift" id="cornerLift" type="button" aria-label="Lift paper corner" aria-pressed="false"></button>
-      </article>
-    </div></div>
+    <div class="evidence-area" id="evidenceArea"><div class="dossier-drag" id="dossierDrag"><article class="dossier" id="dossier" aria-label="Detective observation">
+      <div class="d-grip" id="dGrip" aria-hidden="true"></div><i class="d-pin" id="dPin" aria-hidden="true"></i>
+      <p class="d-note"><span class="note-reveal"><span id="dNote">执行者。她最近一次下单，是在三天前。</span><i class="rb" id="noteBar"></i></span></p>
+      <div class="d-meta"><div class="d-head"><span id="dNo">FILE 01</span><span class="d-tag" id="dStatus">ACTIVE</span></div><dl><div class="d-row"><dt>MODIFIED</dt><dd><button class="modified-value" id="dMod" type="button">00:00:00</button></dd></div></dl><p class="opened-clue" id="openedClue" aria-hidden="true"></p></div>
+      <footer class="d-footer"><span class="file-fragment" aria-hidden="true"></span><span class="stamp" id="stamp">EXAMINED</span></footer><span class="staple-scar" aria-hidden="true"></span><button class="corner-lift" id="cornerLift" type="button" aria-label="Lift paper corner" aria-pressed="false"></button>
+    </article></div></div>
     <nav class="hub-index" id="hubIndex" aria-label="Suspect index"></nav>
   </div>
   <svg class="strings" id="strings" aria-hidden="true"><path class="thread-shadow" id="threadShadow"></path><path class="thread-core" id="threadCore"></path></svg>
   <button class="thread-tail" id="threadTail" type="button" aria-label="Loose thread"></button>
   <button class="hub-b back v-b" id="back" type="button"><i class="b-slab"></i><span class="b-face"><i class="b-tri"></i><span class="e-txt">BACK</span></span></button>
-  <div class="system-line" id="systemLine" role="status" aria-live="polite"></div>
-  <div class="hub-dust" id="hubDust" aria-hidden="true"></div>
+  <div class="system-line" id="systemLine" role="status" aria-live="polite"></div><div class="hub-dust" id="hubDust" aria-hidden="true"></div>
 </section>
 
 <script src="vendor/gsap.min.js"></script>

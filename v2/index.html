@@ -18,6 +18,8 @@
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: #000; overflow: hidden; touch-action: none; }
+  /* Clip the cover-sized scene before it can enlarge a mobile layout viewport. */
+  main { position: fixed; inset: 0; width: 100%; height: 100%; overflow: hidden; }
   body { font-family: 'Space Mono', ui-monospace, monospace; color: var(--paper); }
 
   /* ---------- 场景：分层的动态壁纸。尺寸和位置由 scene.js 按 cover 设置 ---------- */
@@ -260,6 +262,11 @@
     background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,.88), rgba(0,0,0,.42) 55%, transparent 76%); }
   @media (prefers-reduced-motion: reduce) { .lfx, .glow { animation: none !important; } }
   @media (prefers-reduced-motion: reduce) { .grain { animation: none; } }
+  /* Keep the artwork and breathing figure, without large animated light textures on phones. */
+  @media (max-width: 760px) {
+    main .grain, main .lfx, main .fog { animation: none; }
+    main .pst, main .pnl { will-change: auto; }
+  }
 </style>
 </head>
 <body>

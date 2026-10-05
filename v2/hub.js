@@ -30,7 +30,7 @@
   function loadFinale(){return finaleLoading||(finaleLoading=new Promise((resolve,reject)=>{const css=document.createElement('link');css.rel='stylesheet';css.href='finale.css';document.head.append(css);const script=document.createElement('script');script.src='finale.js';script.onload=()=>resolve(window.BB.finale);script.onerror=()=>{script.remove();css.remove();finaleLoading=null;reject(new Error('Finale unavailable'))};document.body.append(script)}))}
   async function beginFinale(){if(window.BB.finaleActive||hub.classList.contains('finale-loading'))return;hub.classList.add('finale-loading');try{const finale=await loadFinale();await finale.start(snapshot());$('#systemLine').textContent=''}catch{$('#systemLine').textContent='RETRY';}finally{hub.classList.remove('finale-loading')}}
   let order=[0,1,2];
-  let opened=false,cur=-1,intent=-1,token=0,unlocked=false,fastened=false,openedAt=0,selectionTL,ghostTL,drag,resizeFrame,threadFrame,clueTimer,ghostTimer,reduced=motionMQ.matches,oldCardTarget;
+  let opened=false,cur=-1,intent=-1,token=0,unlocked=false,fastened=false,openedAt=0,selectionTL,ghostTL,drag,resizeFrame,threadFrame,clueTimer,ghostTimer,reduced=motionMQ.matches;
   const calm=()=>still||reduced, clock=t=>new Date(t).toLocaleTimeString('en-GB',{hour12:false});
   const rope={taut:0,swing:0,tail:0}, geom={left:0,top:0,width:0,height:0}, par={x:0,y:0};
   const buttonMarkup=text=>`<i class="b-slab"></i><span class="b-face"><i class="b-tri"></i><span class="e-txt">${text}</span></span>`;
@@ -115,10 +115,10 @@
   function scheduleLayout(){if(!resizeFrame)resizeFrame=requestAnimationFrame(layout)}
   function configureDrag(){drag?.kill();drag=null;gsap.set(dragEl,{x:0,y:0});if(!phoneMQ.matches&&window.Draggable){if(window.InertiaPlugin)gsap.registerPlugin(Draggable,InertiaPlugin);drag=Draggable.create(dragEl,{type:'x,y',trigger:$('#dGrip'),inertia:!calm(),bounds:{minX:-12,maxX:12,minY:-10,maxY:14},edgeResistance:1,onDrag:threadTick,onThrowUpdate:threadTick})[0]}layout()}
   function fill(){const p=CONFIG[cur];openedAt=Date.now();$('#heroName').textContent=p.name;$('#heroRole').textContent=`${p.no} / ${p.role}`;$('#dNo').textContent=`FILE ${p.no}`;$('#dStatus').textContent=p.status;$('#dNote').replaceChildren(...p.note.map(text=>{const s=document.createElement('span');s.className='note-part';s.textContent=text;return s}));$('#dMod').textContent=clock(openedAt-3000);$('#openedClue').textContent='';$('#openedClue').setAttribute('aria-hidden','true');clearTimeout(clueTimer);gsap.set($('#openedClue'),{opacity:0});paper.classList.remove('corner-open');$('#graphiteStrip').hidden=true;$('#cornerLift').setAttribute('aria-pressed','false');$('#systemLine').textContent=''}
-  function reset(){
+  function reset(preserveOutgoing=false){
     gsap.killTweensOf($('#cutIn'));hub.classList.remove('switch-cover');
     gsap.set([hero,panel,halves,halfA,halfB,$('#peelCorner'),$('#sliceFragment')],{x:0,y:0,rotation:0,rotationX:0,rotationY:0,scale:1,opacity:1});
-    gsap.set($('#cutLine'),{opacity:0});gsap.set($('#cutIn'),{opacity:0,x:0,scaleX:1});gsap.set([$('#heroNameLocation'),$('#evidenceArea'),$('#contactLayer')],{opacity:1});gsap.set($('#heroShadow'),{opacity:.42});gsap.set($('#heroReflection'),{opacity:.075});gsap.set(bar,{scaleX:0});gsap.set($('#stamp'),{opacity:.8});heroClip.style.clipPath='none';rope.taut=0;rope.swing=0;$('#outgoing').replaceChildren();
+    gsap.set($('#cutLine'),{opacity:0});gsap.set($('#cutIn'),{opacity:0,x:0,scaleX:1});gsap.set([$('#heroNameLocation'),$('#evidenceArea'),$('#contactLayer')],{opacity:1});gsap.set($('#heroShadow'),{opacity:.42});gsap.set($('#heroReflection'),{opacity:.075});gsap.set(bar,{scaleX:0});gsap.set($('#stamp'),{opacity:.8});heroClip.style.clipPath='none';rope.taut=0;rope.swing=0;if(!preserveOutgoing)$('#outgoing').replaceChildren();
   }
   function settled(){heroClip.style.clipPath='none';gsap.set(hero,{x:0,y:0,scale:1,rotation:0,opacity:1});gsap.set(panel,{scale:.978,x:0,y:0});if(cur===2){gsap.set(halfA,{x:-2,y:-.4});gsap.set(halfB,{x:2,y:.4})}else gsap.set([halfA,halfB],{x:0,y:0});gsap.set($('#peelCorner'),{opacity:cur===1?1:0,rotationY:0,scale:1});gsap.set($('#sliceFragment'),{opacity:cur===0?.7:0,x:cur===0?6:0});rope.taut=0;gsap.set([$('#heroNameLocation'),$('#evidenceArea'),$('#contactLayer')],{opacity:1});gsap.set($('#heroShadow'),{opacity:.42});gsap.set($('#heroReflection'),{opacity:.075});gsap.set(bar,{scaleX:0});gsap.set($('#stamp'),{opacity:.8});updateThread()}
   function cutPath(){return CONFIG[cur].cut.map(([x,y],i)=>`${i?'L':'M'}${x*100} ${y*100}`).join(' ')}
@@ -136,17 +136,25 @@
   function animateIncoming(t,user,initial){hub.dataset.phase='contained';heroClip.style.clipPath=containedClip();gsap.set(hero,containedPose());gsap.set([$('#heroNameLocation'),$('#evidenceArea'),$('#heroShadow'),$('#heroReflection'),$('#contactLayer')],{opacity:0});gsap.set([$('#heroNameLocation'),$('#evidenceArea')],{y:5});gsap.set(bar,{scaleX:1});gsap.set($('#stamp'),{opacity:0});gsap.set($('#sliceFragment'),{opacity:0});gsap.set($('#peelCorner'),{opacity:0});const tl=gsap.timeline({onUpdate:threadTick,onComplete:()=>completeRead(cur,t)});if(initial)tl.fromTo(panel,{y:16,scale:1.025,opacity:0},{y:0,scale:1,opacity:1,duration:.3,ease:'power3.out'},0);factories[cur](tl,!initial,user);return tl}
   async function select(value,options={}){
     const i=Number(value);if(value===null||value===''||!Number.isInteger(i)||i<0||i>3||!opened)return false;if(i===3){if(unlocked)activateGhost();return unlocked}if(i===intent&&!options.refresh)return true;
-    intent=i;const t=++token;trailSuppressedToken=options.record===false?t:-1;selectionTL?.kill();reset();index.forEach((b,k)=>b.setAttribute('aria-pressed',String(k===i)));hub.dataset.phase='decoding';await Promise.all([art[i].ready,cards[i].ready]);if(t!==token)return false;
+    // Keep the currently displayed pose while images decode. Each request owns
+    // one timeline, so a newer tap cancels the complete previous transition.
+    intent=i;const t=++token;trailSuppressedToken=options.record===false?t:-1;selectionTL?.kill();gsap.killTweensOf($('#cutIn'));index.forEach((b,k)=>b.setAttribute('aria-pressed',String(k===i)));hub.dataset.phase='decoding';await Promise.all([art[i].ready,cards[i].ready]);if(t!==token)return false;
     const previous=cur,initial=previous<0;
-    const swap=()=>{if(t!==token)return;const slot=order.indexOf(i);if(slot>0)[order[0],order[slot]]=[order[slot],order[0]];cur=i;placeCards();fill();setArt();reset();layout()};
+    const swap=(preserveOutgoing=false)=>{if(t!==token)return;const slot=order.indexOf(i);if(slot>0)[order[0],order[slot]]=[order[slot],order[0]];cur=i;placeCards();fill();setArt();reset(preserveOutgoing);layout()};
     if(calm()){
-      if(reduced&&!still&&!initial){gsap.set($('#cutIn'),{opacity:1});swap();settled();selectionTL=gsap.timeline({onComplete:()=>completeRead(i,t)}).to($('#cutIn'),{opacity:0,duration:.14});return true}
       swap();completeRead(i,t);return true;
     }
     if(initial){swap();selectionTL=animateIncoming(t,options.user,true);return true}
-    oldCardTarget=rect(cards[i].el);const sr=rect(stage),hr=rect(hero);const out=hero.cloneNode(true);out.removeAttribute('id');out.querySelector('img').removeAttribute('id');out.style.left=`${hr.x-sr.x}px`;out.style.top=`${hr.y-sr.y}px`;out.style.width=`${hr.w}px`;out.style.height=`${hr.h}px`;out.style.transform='none';$('#outgoing').append(out);gsap.set(hero,{opacity:0});hub.classList.add('switch-cover');
-    $('#cutInArt').src=cards[i].img.src;const cover=gsap.timeline({onUpdate:threadTick});selectionTL=cover;
-    cover.fromTo($('#cutIn'),{x:160,opacity:0,scaleX:.9},{x:0,opacity:1,scaleX:1,duration:.16,ease:'power4.out'},0).to(out,{x:oldCardTarget.x-hr.x,y:oldCardTarget.y-hr.y,scale:Math.min(oldCardTarget.w/hr.w,oldCardTarget.h/hr.h),opacity:0,duration:.25,ease:'power3.in',transformOrigin:'50% 20%'},0).call(()=>{if(t!==token)return;swap();const incoming=animateIncoming(t,options.user,false);selectionTL=incoming;hub.classList.add('switch-cover');gsap.fromTo($('#cutIn'),{x:0,opacity:1},{x:-200,opacity:0,duration:.17,ease:'power3.in',onComplete:()=>hub.classList.remove('switch-cover')});},[],.15);
+    // Preserve the complete visible pose, including its clipping wrapper, then
+    // fade it over the incoming panel. No bright cut-in or red-thread blackout.
+    const out=$('#heroLocation').cloneNode(true);
+    out.removeAttribute('id');out.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
+    out.setAttribute('aria-hidden','true');$('#outgoing').replaceChildren(out);
+    swap(true);
+    const incoming=animateIncoming(t,options.user,false);
+    selectionTL=gsap.timeline({onUpdate:threadTick,onComplete:()=>{if(t===token)$('#outgoing').replaceChildren()}})
+      .add(incoming,0)
+      .to(out,{opacity:0,scale:.985,duration:.24,ease:'power1.inOut',onComplete:()=>out.remove()},0);
     return true;
   }
   function revealGhost(dev=false){if(unlocked)return;unlocked=true;loadFinale().then(f=>f.preload()).catch(()=>{});$('#ghostLocation').hidden=false;index[3].hidden=false;$('#ghostLocation').append(cards[3].el);hub.classList.add('unlocked');if(dev||calm()){fastened=true;updateThread();return}gsap.set(cards[3].el,{y:-16,opacity:0});gsap.set(index[3],{opacity:0});ghostTL=gsap.timeline({onUpdate:threadTick}).to(cards[3].el,{y:0,opacity:1,duration:.42,ease:'power3.out'},.2).call(()=>{fastened=true;updateThread()},[],.48).to(index[3],{opacity:1,duration:.2},.52)}

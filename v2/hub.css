@@ -109,6 +109,8 @@ html.hub-open,html.hub-open body{touch-action:pan-y}
 /* 侧卡头像：桌面按脸的横向位置取景；手机只露左边 45%，所以把海报放大并把脸对到那块区域正中 */
 .side-art{object-position:calc(var(--fx,.5)*100%) 20%}
 @media(max-width:760px){.side-button{container-type:size}.side-art,.ghost-location .side-art{inset:auto;width:auto;height:190cqh;max-width:none;object-fit:fill;aspect-ratio:1100/1430;left:calc(22.5cqw - var(--fx,.5)*190cqh*1100/1430);top:calc(50cqh - var(--fy,.25)*190cqh)}}
+/* 04 uses the whole card, with a bottom label, rather than the half-width face crop. */
+.ghost-location .side-art{inset:4px;width:calc(100% - 8px);height:calc(100% - 8px);max-width:none;aspect-ratio:auto;object-fit:cover;object-position:50% 32%}
 
 /* Round 8: the paper remembers a physical route. */
 .hub.finale-paused{visibility:hidden;pointer-events:none}.hub.finale-paused *{animation-play-state:paused!important}

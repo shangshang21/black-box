@@ -109,3 +109,29 @@ html.hub-open,html.hub-open body{touch-action:pan-y}
 /* 侧卡头像：桌面按脸的横向位置取景；手机只露左边 45%，所以把海报放大并把脸对到那块区域正中 */
 .side-art{object-position:calc(var(--fx,.5)*100%) 20%}
 @media(max-width:760px){.side-button{container-type:size}.side-art,.ghost-location .side-art{inset:auto;width:auto;height:190cqh;max-width:none;object-fit:fill;aspect-ratio:1100/1430;left:calc(22.5cqw - var(--fx,.5)*190cqh*1100/1430);top:calc(50cqh - var(--fy,.25)*190cqh)}}
+
+/* Round 8: the paper remembers a physical route. */
+.hub.finale-paused{visibility:hidden;pointer-events:none}.hub.finale-paused *{animation-play-state:paused!important}
+.hub.finale-loading .ghost-signal{opacity:.45}.graphite-strip{position:absolute;right:17px;bottom:13px;width:96px;height:22px;border:0;background:#b0aa9d;transform:rotate(-4deg);cursor:grab;z-index:6;clip-path:polygon(0 0,100% 0,97% 87%,72% 100%,0 90%)}
+.graphite-strip svg{width:100%;height:100%;fill:none;stroke:#49473f;stroke-width:1}.graphite-strip[data-tear="hound"]{border-radius:0 0 12px 0;transform:rotate(5deg);box-shadow:3px 3px 0 #45423a}.graphite-strip[data-tear="smith"]{clip-path:polygon(0 0,100% 0,82% 100%,0 100%)}
+.strip-workbench{position:absolute;right:0;top:calc(100% + 12px);width:190px;height:94px;background:#131310;border:1px solid #555247;z-index:10;transform:rotate(-2deg)}
+.strip-register{position:absolute;inset:0;width:100%;border:0;background:none;cursor:crosshair}.strip-register svg{position:absolute;left:0;top:0;width:190px;height:66px;fill:none;stroke:#777264;stroke-width:1;stroke-dasharray:2 3}
+.strip-piece{position:absolute;width:190px;height:22px;min-height:0;border:0;padding:0;background:#a9a496;cursor:grab;touch-action:none;clip-path:polygon(0 0,100% 0,98% 100%,0 100%)}
+.strip-piece svg{display:block;width:190px;height:22px;fill:none;stroke:#35352e;stroke-width:1.3}.strip-hound{border-radius:0 0 7px 0;clip-path:polygon(0 0,100% 0,96% 87%,100% 100%,0 100%)}.strip-smith{clip-path:polygon(0 0,100% 0,94% 100%,0 100%)}
+.strip-piece.registered{cursor:default}.strip-workbench.aligned{height:66px;border-color:#8c8676}.graphite-strip:focus-visible,.strip-piece:focus-visible,.strip-register:focus-visible{outline:2px solid #ddd6c4;outline-offset:3px}
+@media(max-width:760px){.strip-workbench{top:calc(100% + 12px);right:12px}.hub-flow:has(.strip-workbench:not([hidden])){padding-bottom:150px}}
+@media(min-width:761px) and (max-height:650px){.strip-workbench{right:calc(100% + 20px);top:0}}
+.strip-workbench.holding .strip-register{z-index:4}.strip-workbench.holding .strip-register svg{stroke:#bdb5a3;stroke-dasharray:none}
+
+/* The assembled three strips remain a physical working surface, now readable. */
+.strip-workbench{transform:rotate(-2deg) scale(1.5);transform-origin:100% 0}
+.strip-workbench.aligned .strip-piece{cursor:zoom-in}
+.gesture-diagram-dialog{width:min(570px,86vw);padding:0;border:1px solid #716d60;background:#aaa494;transform:rotate(-2deg);box-shadow:0 20px 80px #0009}
+.gesture-diagram-dialog::backdrop{background:#030303d9}
+.gesture-diagram-dialog button{display:block;width:100%;padding:24px 12px;border:0;background:none;cursor:zoom-out}
+.gesture-diagram-dialog svg{display:block;width:100%;height:auto;fill:none;stroke:#36362e;stroke-width:1.3}
+.gesture-diagram-dialog .paper-fold{stroke:#797466;stroke-width:.4}
+.gesture-diagram-dialog button:focus-visible{outline:1px solid #35352e;outline-offset:-7px}
+@media(max-width:760px){.hub-flow:has(.strip-workbench:not([hidden])){padding-bottom:210px}}
+@media(min-width:761px){.strip-workbench{right:calc(100% + 24px);top:calc(100% - 110px)}}
+@media(min-width:761px) and (max-height:650px){.strip-workbench{top:0}}

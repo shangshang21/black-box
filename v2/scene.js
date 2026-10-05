@@ -13,6 +13,7 @@
 (() => {
   const W = 1672, H = 941;                                   // 场景的坐标系（和证据墙图的尺寸一致）
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const compact = matchMedia('(max-width:760px)');
 
   // box：人物在图里的外框（0~1）；hand：握线的那只手（0~1）；poster：他/她的通缉令是第几张
   const CHARS = {
@@ -50,6 +51,8 @@
   const C = Object.assign({}, CHARS[pick], STAGE);
 
   const sceneEl = document.getElementById('scene');
+  const entry = sceneEl.closest('main');
+  const entryInactive = () => document.hidden || entry.style.display === 'none' || entry.style.visibility === 'hidden';
   const enterBtn = document.getElementById('enter');
   const el = (tag, cls, parent) => { const e = document.createElement(tag); if (cls) e.className = cls; (parent || sceneEl).append(e); return e; };
   // 分批加载：不是最要紧的图先不请求，等墙和人物到了再放行（否则几十张图一起抢带宽，最重要的人物反而最后到：限速 5 Mbps 实测 7 秒）
@@ -194,7 +197,9 @@
   /* ---------- 版面：按 cover 铺满，竖屏时让人物居中 ---------- */
   let S = 1;
   function layout() {
-    const vw = innerWidth, vh = innerHeight;
+    // innerWidth can include the scene's overflow on mobile. Measure the root
+    // viewport so a cover-sized scene cannot feed back into its own dimensions.
+    const vw = document.documentElement.clientWidth, vh = document.documentElement.clientHeight;
     S = Math.max(vw / W, vh / H);
     const sw = W * S, sh = H * S;
     const left = Math.min(0, Math.max(vw - sw, vw / 2 - C.cx * S));
@@ -204,7 +209,7 @@
     // 窄屏会把场景左右裁掉：海报始终收进可见范围（挤到人物背后也没关系，它本来就在墙上，人站在前面）
     const visL = -left / S + 14, visR = (vw - left) / S - 14;
     [...posters, ...decor, ...panels].forEach((o) => { const x = Math.max(visL, Math.min(o.bx, visR - o.w)); (o.pst || o.im || o.el).style.left = x.toFixed(1) + 'px'; });
-    const dpr = Math.min(devicePixelRatio || 1, 1.5);
+    const dpr = Math.min(devicePixelRatio || 1, compact.matches ? 1 : 1.5);
     dustCanvas.width = Math.round(sw * dpr); dustCanvas.height = Math.round(sh * dpr);
   }
 
@@ -324,13 +329,14 @@
   posters.forEach((p) => regSway(p.sw, p.pst, .9, 190));
   panels.forEach((p) => regSway(p.sw, p.el, p.far ? .5 : .8, 150));
   function measureSway() {
+    if (compact.matches || entryInactive()) return;
     const sr = sceneEl.getBoundingClientRect(), k = sr.width / W;
     swayItems.forEach((it) => { const r = it.host.getBoundingClientRect(); it.cx = (r.left + r.width / 2 - sr.left) / k; it.cy = (r.top + r.height / 2 - sr.top) / k; });
   }
   setInterval(measureSway, 1500); setTimeout(measureSway, 600);
   let swayFrame = 0;
   function stepSway(t) {
-    if ((swayFrame++ & 1) || reduce) return;                    // 隔一帧算一次就够了
+    if ((swayFrame++ & 1) || reduce || compact.matches) return; // Touch screens do not need per-poster hover motion.
     const wind = Math.sin(t * .37) + Math.sin(t * .91 + 1.3) * .5;   // 整面墙共用的一阵一阵的微风
     for (const it of swayItems) {
       let lift = 0, push = 0;
@@ -344,10 +350,10 @@
 
   /* ---------- 灰尘 ---------- */
   const dctx = dustCanvas.getContext('2d');
-  const dust = Array.from({ length: 70 }, () => ({ x: Math.random() * W, y: Math.random() * H, r: .6 + Math.random() * 1.6, vx: (Math.random() - .5) * 6, vy: -2 - Math.random() * 7, f: .4 + Math.random() * 1.2, ph: Math.random() * 6.3, z: .4 + Math.random() * .6 }));
+  const dust = Array.from({ length: compact.matches ? 28 : 70 }, () => ({ x: Math.random() * W, y: Math.random() * H, r: .6 + Math.random() * 1.6, vx: (Math.random() - .5) * 6, vy: -2 - Math.random() * 7, f: .4 + Math.random() * 1.2, ph: Math.random() * 6.3, z: .4 + Math.random() * .6 }));
   // 右边那盏灯的光锥：灯在 (1522, 96)，光朝右下斜着打出来（偏离竖直约 7°），锥里有尘埃缓慢飘过并闪烁
   const CONE = { x: 1522, y: 98, dx: .122, dy: .993, len: 330 };
-  const motes = Array.from({ length: 34 }, () => ({ t: Math.random(), u: Math.random() - .5, ph: Math.random() * 6.3, f: .8 + Math.random() * 2, r: .8 + Math.random() * 1.7, sp: .012 + Math.random() * .02 }));
+  const motes = Array.from({ length: compact.matches ? 12 : 34 }, () => ({ t: Math.random(), u: Math.random() - .5, ph: Math.random() * 6.3, f: .8 + Math.random() * 2, r: .8 + Math.random() * 1.7, sp: .012 + Math.random() * .02 }));
   function drawDust(t, dt) {
     const k = dustCanvas.width / W;
     dctx.clearRect(0, 0, dustCanvas.width, dustCanvas.height); dctx.globalCompositeOperation = 'lighter';
@@ -370,6 +376,7 @@
     gsap.set(figWrap, { transformOrigin: `50% ${feetPct}%` });
     gsap.to(figWrap, { scaleY: 1.007, scaleX: 1.002, duration: 2.5, ease: 'sine.inOut', yoyo: true, repeat: -1 });   // 呼吸
     gsap.to(figWrap, { rotation: .3, duration: 3.8, ease: 'sine.inOut', yoyo: true, repeat: -1 });                   // 重心微微摇晃
+    if (matchMedia('(hover:none)').matches) return;
     const lay = [[bgPar, 6, 4], [midPar, 10, 6], [figPar, 14, 8], [dustPar, 26, 14]].map(([e, ax, ay]) => ({ qx: gsap.quickTo(e, 'x', { duration: 1.3, ease: 'power3' }), qy: gsap.quickTo(e, 'y', { duration: 1.3, ease: 'power3' }), ax, ay }));
     addEventListener('pointermove', (e) => {
       const nx = e.clientX / innerWidth - .5, ny = e.clientY / innerHeight - .5;
@@ -377,14 +384,17 @@
     }, { passive: true });
   }
 
-  let prev = 0;
+  let prev = 0, lastDust = 0;
   gsap.ticker.add((time) => {
     const dt = Math.min(.05, time - prev); prev = time;
+    if (entryInactive()) return;
     if (!reduce) {
-      drawDust(time, dt);
+      if (!compact.matches || time - lastDust >= 1 / 30) {
+        drawDust(time, Math.min(.1, time - lastDust)); lastDust = time;
+      }
       // 背光跟着中央那团光一起呼吸，偶尔一闪
       const spike = Math.sin(Math.floor(time * 5) * 12.9898) * 43758.5453 % 1 > .9 ? .2 : 0;
-      halo.style.opacity = (.32 + .1 * Math.sin(time * 1.1) + .05 * Math.sin(time * 2.9 + 1) + spike).toFixed(3);
+      if (!compact.matches) halo.style.opacity = (.32 + .1 * Math.sin(time * 1.1) + .05 * Math.sin(time * 2.9 + 1) + spike).toFixed(3);
     }
     stepRope(dt); drawRope(); stepSway(time);
   });

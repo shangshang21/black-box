@@ -14,6 +14,8 @@
   const W = 1672, H = 941;                                   // 场景的坐标系（和证据墙图的尺寸一致）
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const compact = matchMedia('(max-width:760px)');
+  const touch = matchMedia('(hover:none)');
+  const mobileRender = () => compact.matches || touch.matches;
 
   // box：人物在图里的外框（0~1）；hand：握线的那只手（0~1）；poster：他/她的通缉令是第几张
   const CHARS = {
@@ -61,7 +63,7 @@
   const svgEl = (tag, attrs, parent) => { const e = document.createElementNS('http://www.w3.org/2000/svg', tag); Object.entries(attrs || {}).forEach(([k, v]) => e.setAttribute(k, v)); parent.append(e); return e; };
 
   /* ---------- 图层 ---------- */
-  const bgPar = el('div', 'L lyr');                               // 背景组：证据墙、贴纸、灯光（视差幅度最小）
+  const bgPar = el('div', 'L lyr scene-bg');                               // 背景组：证据墙、贴纸、灯光（视差幅度最小）
   const plate = el('img', 'L plate', bgPar); const pq = new URLSearchParams(location.search).get('plate'); const startKey = pq && /^[a-z]$/.test(pq) ? pq : 'k';             // 默认用重画过墙脚的 K；?plate=e 可以回到旧的涂鸦墙
   plate.src = `assets/s-plate-${startKey}.jpg`;
   const FX_PLATES = new Set(['d', 'e', 'f', 'g', 'h', 'i', 'j']);   // 这些底板的墙脚是我用叠加层补的；k / l 是重画的，自带踢脚线和倒影，叠加层要关掉 plate.alt = ''; plate.draggable = false;
@@ -92,7 +94,7 @@
   el('div', 'fx-base', floorBoard); el('div', 'fx-baseshade', floorBoard);
   if (!FX_PLATES.has(startKey)) floorBoard.style.opacity = 0;
   const wallFar = el('div', 'wall', bgPar);                   // 远层墙：又暗又小的分镜（贴纸画板是 1672x941 的，整块按场景缩放）
-  const midPar = el('div', 'L lyr');                              // 近层组：亮一点的分镜、海报、装饰（视差幅度比背景大一点）
+  const midPar = el('div', 'L lyr scene-mid');                              // 近层组：亮一点的分镜、海报、装饰（视差幅度比背景大一点）
   const wallNear = el('div', 'wall', midPar);
   // 一张海报 = .pst（负责"啪"地贴上去：缩放/旋转/下落）> .pin（负责悬停放大）> 影子 + 海报 + 胶带
   const posters = POSTERS.map((s, k) => {
@@ -172,7 +174,7 @@
     gsap.fromTo(p.el, { opacity: 0, scale: 1.45, rotation: p.rot + (Math.random() < .5 ? -7 : 7) }, { opacity: 1, scale: 1, rotation: p.rot, duration: .32, ease: 'back.out(1.7)', delay });
   }
 
-  const figPar = el('div', 'L lyr');                              // 人物组（视差幅度中等）
+  const figPar = el('div', 'L lyr scene-figure');                              // 人物组（视差幅度中等）
   const figWrap = el('div', 'fig-wrap', figPar);              // 呼吸 / 微微摇晃作用在它身上
   const shadow = el('img', 'shadow', figWrap);                // 投在地上的影子：背后是光，影子朝观众拖过来
   const refl = el('img', 'refl', figWrap);                    // 地面倒影
@@ -189,7 +191,7 @@
   const line = svgEl('path', { class: 'line' }, thread);
   const cap = svgEl('circle', { class: 'cap', r: 6 }, thread);
 
-  const dustPar = el('div', 'L lyr');                             // 灰尘组（视差幅度最大）
+  const dustPar = el('div', 'L lyr scene-dust');                             // 灰尘组（视差幅度最大）
   const dustCanvas = el('canvas', 'L dust', dustPar);
 
   gsap.set(bgPar, { scale: 1.03 }); gsap.set(midPar, { scale: 1.02 });                           // 背景组放大一点，视差移动时边缘不会露出黑底
@@ -209,15 +211,26 @@
     // 窄屏会把场景左右裁掉：海报始终收进可见范围（挤到人物背后也没关系，它本来就在墙上，人站在前面）
     const visL = -left / S + 14, visR = (vw - left) / S - 14;
     [...posters, ...decor, ...panels].forEach((o) => { const x = Math.max(visL, Math.min(o.bx, visR - o.w)); (o.pst || o.im || o.el).style.left = x.toFixed(1) + 'px'; });
-    const dpr = Math.min(devicePixelRatio || 1, compact.matches ? 1 : 1.5);
-    dustCanvas.width = Math.round(sw * dpr); dustCanvas.height = Math.round(sh * dpr);
+    const dpr = Math.min(devicePixelRatio || 1, mobileRender() ? 1 : 1.5);
+    const cw = Math.round(sw * dpr), ch = Math.round(sh * dpr);
+    if (dustCanvas.width !== cw) dustCanvas.width = cw;
+    if (dustCanvas.height !== ch) dustCanvas.height = ch;
   }
 
   // 人物摆放：图片的宽高比要等图片加载完才知道
-  const loaded = new Promise((res) => { if (fig.complete && fig.naturalWidth) res(); else fig.onload = () => res(); });
+  // Decode the portrait and its filtered copies before removing the loading veil.
+  async function imageReady(img) {
+    if (!img.complete) await new Promise(resolve => {
+      img.addEventListener('load', resolve, { once: true });
+      img.addEventListener('error', resolve, { once: true });
+    });
+    if (img.naturalWidth) { try { await img.decode(); } catch {} }
+  }
+  const loaded = imageReady(fig);
   let feetPct = 96;
   function placeFigure() {
     const iw = fig.naturalWidth, ih = fig.naturalHeight;
+    if (!iw || !ih) return;
     const [x0, y0, x1, y1] = C.box;
     const sf = C.figH / ((y1 - y0) * ih);                     // 图片 → 场景像素 的缩放
     const w = iw * sf, h = ih * sf;
@@ -247,7 +260,7 @@
   const floorY = (x) => 886 + Math.max(0, 940 - x) * .17;    // 地面是斜的：越靠近观众（画面左下）越低
   const ptr = { x: -999, y: -999, vx: 0, vy: 0, on: false };
   function toScene(cx, cy) { const r = sceneEl.getBoundingClientRect(); return { x: (cx - r.left) / r.width * W, y: (cy - r.top) / r.height * H }; }
-  function handScene() { const r = hand.getBoundingClientRect(); return toScene(r.left, r.top); }
+  function handScene() { if (mobileRender()) { const r = fig.getBoundingClientRect(); return toScene(r.left + r.width * C.hand[0], r.top + r.height * C.hand[1]); } const r = hand.getBoundingClientRect(); return toScene(r.left, r.top); }
   function ropeInit(h) {
     let x = h.x, y = h.y;
     for (let i = 0; i < N; i++) {
@@ -373,9 +386,11 @@
 
   /* ---------- 呼吸、摇晃、背光、视差 ---------- */
   function startMotion() {
-    gsap.set(figWrap, { transformOrigin: `50% ${feetPct}%` });
-    gsap.to(figWrap, { scaleY: 1.007, scaleX: 1.002, duration: 2.5, ease: 'sine.inOut', yoyo: true, repeat: -1 });   // 呼吸
-    gsap.to(figWrap, { rotation: .3, duration: 3.8, ease: 'sine.inOut', yoyo: true, repeat: -1 });                   // 重心微微摇晃
+    // On phones keep filtered shadows, reflection and halo on a stable layer.
+    const breathing = mobileRender() ? fig : figWrap;
+    gsap.set(breathing, { transformOrigin: `50% ${feetPct}%` });
+    gsap.to(breathing, { scaleY: 1.007, scaleX: 1.002, duration: 2.5, ease: 'sine.inOut', yoyo: true, repeat: -1 });   // 呼吸
+    gsap.to(breathing, { rotation: .3, duration: 3.8, ease: 'sine.inOut', yoyo: true, repeat: -1 });                   // 重心微微摇晃
     if (matchMedia('(hover:none)').matches) return;
     const lay = [[bgPar, 6, 4], [midPar, 10, 6], [figPar, 14, 8], [dustPar, 26, 14]].map(([e, ax, ay]) => ({ qx: gsap.quickTo(e, 'x', { duration: 1.3, ease: 'power3' }), qy: gsap.quickTo(e, 'y', { duration: 1.3, ease: 'power3' }), ax, ay }));
     addEventListener('pointermove', (e) => {
@@ -394,24 +409,25 @@
       }
       // 背光跟着中央那团光一起呼吸，偶尔一闪
       const spike = Math.sin(Math.floor(time * 5) * 12.9898) * 43758.5453 % 1 > .9 ? .2 : 0;
-      if (!compact.matches) halo.style.opacity = (.32 + .1 * Math.sin(time * 1.1) + .05 * Math.sin(time * 2.9 + 1) + spike).toFixed(3);
+      if (!mobileRender()) halo.style.opacity = (.32 + .1 * Math.sin(time * 1.1) + .05 * Math.sin(time * 2.9 + 1) + spike).toFixed(3);
     }
     stepRope(dt); drawRope(); stepSway(time);
   });
 
   addEventListener('resize', layout);
   layout();
-  loaded.then(() => { placeFigure(); layout(); if (!reduce) startMotion(); });
+  loaded.then(() => { placeFigure(); layout(); });
 
   /* ---------- 分批加载的流程 ----------
      ① 先只有墙和人物在请求（约 0.6 MB）；② 它们到了，才放行海报、胶带、装饰（约 0.9 MB），并宣布 Scene.ready，首页的开场才开始放；
      ③ 海报到了（最多等 1.8 秒）再放行 22 张分镜，每张到货自己贴上去；④ 海报到齐后，一张张"啪"地拍上墙，站着的那位最后。 */
-  const imgDone = (img) => new Promise((res) => { if (img.complete && img.naturalWidth) res(); else { img.addEventListener('load', res, { once: true }); img.addEventListener('error', res, { once: true }); } });
+  const imgDone = imageReady;
   const within = (pr, ms) => Promise.race([pr, new Promise((r) => setTimeout(r, ms))]);
   const group = (g) => late.filter((x) => x.group === g);
   const release = (items) => items.forEach((x) => { x.img.src = x.url; });
-  const ready = within(Promise.all([imgDone(plate), imgDone(fig)]), 9000);
+  const ready = within(Promise.all([plate, fig, shadow, refl, halo].map(imgDone)), 9000);
   ready.then(() => {
+    if (!reduce && fig.naturalWidth) startMotion();
     release(group('poster'));
     const postersIn = within(Promise.all(posters.map((p) => imgDone(p.pp))), 3500);
     within(postersIn, 1800).then(() => {

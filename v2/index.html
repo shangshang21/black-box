@@ -262,11 +262,22 @@
     background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,.88), rgba(0,0,0,.42) 55%, transparent 76%); }
   @media (prefers-reduced-motion: reduce) { .lfx, .glow { animation: none !important; } }
   @media (prefers-reduced-motion: reduce) { .grain { animation: none; } }
-  /* Keep the artwork and breathing figure, without large animated light textures on phones. */
-  @media (max-width: 760px) {
-    main .grain, main .lfx, main .fog { animation: none; }
-    main .pst, main .pnl { will-change: auto; }
+  /* Fade a viewport-sized veil while the cover artwork stays composited. */
+  @media (max-width: 760px), (hover: none) {
+    main { isolation: isolate; }
+    main .scene { isolation: isolate; }
+    main .scene-bg { z-index: 0; }
+    main .scene-mid { z-index: 1; }
+    main .scene-figure { z-index: 2; }
+    main .fog { z-index: 3; }
+    main .thread { z-index: 4; }
+    main .scene-dust { z-index: 5; }
+    main .grain, main .scene .lfx, main .scene .fog, main .scene .glow { animation: none; }
+    main .glow, main .lfx, main .fog, main .fx-refl { mix-blend-mode: normal; }
+    main .lyr, main .pst, main .pnl, main .fig-wrap { will-change: auto; }
+    main .fig { will-change: transform; }
   }
+
 </style>
 </head>
 <body>
@@ -326,11 +337,12 @@
 <script src="sfx.js"></script>
 <script>if (/[?&]hub=/.test(location.search)) document.write('<script src="hub.js?v=20261006-hub2"><\/script>');   // 开发用的直达开关需要它同步加载；正常访问时 hub.js 延后加载（见下面）</script>
 <script src="panels.js"></script>
-<script src="scene.js"></script>
+<script src="scene.js?v=20261007-home1"></script>
 <script>
 (() => {
   const $ = (s) => document.querySelector(s);
   const scene = $('#scene'), enterBtn = $('#enter');
+  const mobileRender = matchMedia('(max-width:760px), (hover:none)').matches;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ---------- 系统读数 ---------- */
@@ -347,13 +359,13 @@
 
   /* ---------- 入场 ---------- */
   const tl = gsap.timeline({ defaults: { ease: 'power3.out' }, paused: true });   // 先暂停：墙和人物就绪（Scene.ready）才开场
-  tl.to(scene, { opacity: 1, duration: reduce ? .01 : 1.6, ease: 'power1.inOut' }, 0)
+  tl.to(scene, { opacity: 1, duration: reduce || mobileRender ? 0 : 1.6, ease: 'power1.inOut' }, 0)
     .fromTo('.tag.granted', { opacity: 0, scale: .2, transformOrigin: '0% 50%' }, { opacity: 1, scale: 1, duration: .55, ease: 'back.out(2.4)' }, .35)
     .fromTo('.tag.crack',   { opacity: 0, scale: .2, transformOrigin: '0% 50%' }, { opacity: 1, scale: 1, duration: .55, ease: 'back.out(2.4)' }, .5)
     .fromTo('.bar',         { opacity: 0, scaleX: 0 },         { opacity: 1, scaleX: 1, duration: .5 }, .62)
     .to('.meta', { opacity: 1, duration: .6 }, 1.0)
     .fromTo('#enter',  { opacity: 0, scale: .35 }, { opacity: 1, scale: 1, duration: .6, ease: 'back.out(2.6)' }, 2.3);
-  window.Scene.ready.then(() => { performance.mark('scene-ready'); document.documentElement.classList.add('ready'); if (reduce) tl.progress(1); else tl.play(0); });
+  window.Scene.ready.then(() => { performance.mark('scene-ready'); if (mobileRender) gsap.set(scene, { opacity: 1 }); document.documentElement.classList.add('ready'); if (reduce) tl.progress(1); else tl.play(0); });
 
   /* 列队页（hub.js）延后加载：它一启动就会请求 4 张大海报（1.6 MB），和首页抢带宽。
      首页稳定后 2.5 秒、或鼠标靠近 / 点击 ENTER 时再取；点得再快，openHub 也会等它加载完。 */

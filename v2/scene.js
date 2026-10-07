@@ -426,10 +426,17 @@
   const group = (g) => late.filter((x) => x.group === g);
   const release = (items) => items.forEach((x) => { x.img.src = x.url; });
   const criticalReady = Promise.all([plate, fig, shadow, refl, halo].map(imgDone));
-  // A slow mobile connection must not reveal half-decoded layers at 9 seconds.
-  const ready = mobileRender() ? criticalReady : within(criticalReady, 9000);
+  // Phones reveal one complete wall. Do not slam late images onto an already
+  // visible scene: that also shakes the portrait and looks like dropped layers.
+  const ready = mobileRender() ? criticalReady.then(async () => {
+    release(late);
+    await Promise.all([...late.map(x => imgDone(x.img)), document.fonts.ready]);
+    posters.forEach(p => { gsap.set(p.pst, { opacity: 1 }); gsap.set(p.tape, { opacity: 1 }); });
+    panels.forEach(p => gsap.set(p.el, { opacity: 1 }));
+  }) : within(criticalReady, 9000);
   ready.then(() => {
     if (!reduce && fig.naturalWidth) startMotion();
+    if (mobileRender()) return;
     release(group('poster'));
     const postersIn = within(Promise.all(posters.map((p) => imgDone(p.pp))), 3500);
     within(postersIn, 1800).then(() => {

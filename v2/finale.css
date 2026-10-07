@@ -38,3 +38,17 @@
 @media(max-height:550px) and (min-width:761px){.finale-meta{font-size:9px}.finale-control{padding:10px 15px;font-size:9px!important}.light-note{padding:23px 24px 34px;min-height:132px}.note-copy{font-size:16px;margin-top:13px}.note-stamp{right:8px}.note-chrome{gap:12px;font-size:9px}.note-chrome small{font-size:7px}}
 .finale.portrait .finale-meta{left:24px;top:calc(24px + env(safe-area-inset-top));font-size:10px;gap:10px}.finale.portrait .finale-ref{display:none}.finale.portrait .finale-search{left:24px}.finale.portrait .finale-skip,.finale.portrait .finale-exit{right:24px}.finale.portrait .finale-control{font-size:10px!important;padding:14px 18px}.finale.portrait .finale-search,.finale.portrait .finale-skip{bottom:calc(24px + env(safe-area-inset-bottom))}.finale.portrait .finale-exit{top:calc(24px + env(safe-area-inset-top))}.finale.portrait .light-note{width:84%;min-height:174px;padding:30px 27px 43px}.finale.portrait .note-copy{font-size:18px;line-height:1.8;margin-top:19px;padding-right:0}.finale.portrait .note-stamp{width:56px;height:56px;right:8px}.finale.portrait .note-chrome{gap:14px;font-size:10px}.finale.portrait .note-chrome small{font-size:7px}.finale.portrait .finale-result{left:8%;top:64%;max-width:84%}.finale.portrait .finale-result p{font-size:18px;letter-spacing:.08em;white-space:normal;text-wrap:balance}
 @media(prefers-reduced-motion:reduce){.finale *,.finale .message-point:before,.finale .message-point:after,.finale .note-paper:before,.finale .note-paper:after{transition:none!important;animation:none!important}.message-point:before{opacity:.85}.light-note.fading{animation:ink-out .18s linear both!important}.stamped .note-stamp{transform:rotate(-6deg)}.input-pop{filter:none;scale:1}}
+
+.finale.portrait{--phone-unit:calc(100vw / 384)}
+.finale.portrait .finale-meta{left:calc(var(--phone-unit)*24);top:calc(var(--phone-unit)*24 + env(safe-area-inset-top));font-size:calc(var(--phone-unit)*10);gap:calc(var(--phone-unit)*10)}
+.finale.portrait .finale-control{font-size:calc(var(--phone-unit)*10)!important;padding:calc(var(--phone-unit)*14) calc(var(--phone-unit)*18)}
+.finale.portrait .finale-search{left:calc(var(--phone-unit)*24)}
+.finale.portrait .finale-skip,.finale.portrait .finale-exit{right:calc(var(--phone-unit)*24)}
+.finale.portrait .finale-search,.finale.portrait .finale-skip{bottom:calc(var(--phone-unit)*24 + env(safe-area-inset-bottom))}
+.finale.portrait .finale-exit{top:calc(var(--phone-unit)*24 + env(safe-area-inset-top))}
+.finale.portrait .light-note{min-height:calc(var(--phone-unit)*174);padding:calc(var(--phone-unit)*30) calc(var(--phone-unit)*27) calc(var(--phone-unit)*43)}
+.finale.portrait .note-copy{font-size:calc(var(--phone-unit)*18);margin-top:calc(var(--phone-unit)*19)}
+.finale.portrait .note-chrome{font-size:calc(var(--phone-unit)*10);gap:calc(var(--phone-unit)*14)}
+.finale.portrait .note-chrome small{font-size:calc(var(--phone-unit)*7)}
+.finale.portrait .note-stamp{width:calc(var(--phone-unit)*56);height:calc(var(--phone-unit)*56);right:calc(var(--phone-unit)*8)}
+.finale.portrait .finale-result p{font-size:calc(var(--phone-unit)*18)}

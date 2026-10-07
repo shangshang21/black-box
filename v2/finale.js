@@ -50,7 +50,7 @@
   // Both rendering and recognition use this same sampled thread, from floor to hand.
   function threadPolyline(rearShot=false){
     let start,curves;
-    if(rearShot){const p=rearXY(.32,.73),floor=rearXY(.31,.84),end=rearXY(.33,.70);if(phone){p.x+=w*.22;floor.x+=w*.22;end.x+=w*.22;}
+    if(rearShot){const p=rearXY(.32,.73),floor=rearXY(.31,.84),end=rearXY(.33,.70);if(phone){const shift=rearHandShift();p.x+=shift;floor.x+=shift;end.x+=shift;}
       start={x:-20,y:h*.97};curves=[[{x:w*.12,y:h*.93},{x:floor.x-55,y:floor.y+22},floor],[{x:floor.x+55*(1-tension),y:floor.y-15},{x:p.x-30*(1-tension),y:p.y+45},{x:p.x,y:p.y-tension*3}],[{x:p.x+7,y:p.y-13},{x:p.x+7,y:p.y-13},end]];
     }else{const r=humanRect(),hand={x:r.x+r.width*.563,y:r.y+r.height*.491-pull*8},floor={x:w*(phone?.26:.28),y:h*.85};
       start={x:w*.035,y:h*1.02};curves=[[{x:w*.12,y:h*.96},{x:floor.x-30,y:floor.y+22},floor],[{x:w*.52,y:h*.86-pull*14},{x:hand.x-18,y:hand.y+90-pull*30},hand],[{x:hand.x+14,y:hand.y+40-pull*20},{x:hand.x+21,y:hand.y+12},{x:hand.x+10,y:hand.y+4}]];
@@ -124,11 +124,15 @@
   function acquire(){if(phase!=='search')return;clickSound();phase='pull';root.dataset.phase=phase;elapsed=0;$('#findHuman').hidden=true;$('#tieThreadKnot').hidden=true;light.tx=humanRect().x+humanRect().width*.56;light.ty=humanRect().y+humanRect().height*(phone?.35:.25);$('#finaleAnnounce').textContent='Human found.';}
 
 
-  function resize(){if(!root||root.hidden)return;w=innerWidth;h=innerHeight;phone=w<761&&h>w;dpr=Math.min(devicePixelRatio,phone?1.5:1);for(const c of [canvas,lit,ambient,aperture,rear]){c.width=Math.round(w*dpr);c.height=Math.round(h*dpr)}canvas.style.width=w+'px';canvas.style.height=h+'px';root.classList.toggle('portrait',phone);light.x=light.tx=Math.min(w,light.tx||w*.34);light.y=light.ty=Math.min(h,light.ty||h*.83);drawLit();drawRear();layoutReports();if(phase==='search'||phase==='pull')renderRoom();else if(phase!=='cut')renderRear();}
-  function rearRect(){return phone?{x:-w*.55,y:h*.18,width:w*2.2,height:h*.76}:{x:0,y:0,width:w,height:h};}
+  function resize(){if(!root||root.hidden)return;w=innerWidth;h=innerHeight;phone=h>w&&(w<761||matchMedia('(hover:none)').matches);dpr=Math.min(devicePixelRatio,phone?1.5:1);for(const c of [canvas,lit,ambient,aperture,rear]){c.width=Math.round(w*dpr);c.height=Math.round(h*dpr)}canvas.style.width=w+'px';canvas.style.height=h+'px';root.classList.toggle('portrait',phone);light.x=light.tx=Math.min(w,light.tx||w*.34);light.y=light.ty=Math.min(h,light.ty||h*.83);drawLit();drawRear();layoutReports();if(phase==='search'||phase==='pull')renderRoom();else if(phase!=='cut')renderRear();}
+  function rearRect(){
+    const im=assets[2],scale=phone?Math.min(w*2.2/im.naturalWidth,h*.76/im.naturalHeight):Math.max(w/im.naturalWidth,h/im.naturalHeight),width=im.naturalWidth*scale,height=im.naturalHeight*scale;
+    return phone?{x:w*.55-width*.5,y:h*.18+(h*.76-height)*.5,width,height}:{x:(w-width)*.5,y:(h-height)*.5,width,height};
+  }
+  function rearHandShift(){const r=rearRect();return phone?w*.22-(r.x+r.width*.25):0;}
   function rearXY(x,y){const r=rearRect();return{x:r.x+r.width*x,y:r.y+r.height*y};}
   function drawRear(){if(!assets||!w)return;rearCtx.setTransform(dpr,0,0,dpr,0,0);rearCtx.clearRect(0,0,w,h);const r=rearRect();const im=assets[2],sx=im.naturalWidth*.25,sy=im.naturalHeight*.67,sw=im.naturalWidth*.14,sh=im.naturalHeight*.15;
-    if(phone||(tension>0&&!reduced())){rearCtx.save();rearCtx.beginPath();rearCtx.rect(0,0,w,h);rearCtx.rect(r.x+r.width*.25,r.y+r.height*.67,r.width*.14,r.height*.15);rearCtx.clip('evenodd');rearCtx.drawImage(im,r.x,r.y,r.width,r.height);rearCtx.restore();rearCtx.drawImage(im,sx,sy,sw,sh,r.x+r.width*.25+(phone?w*.22:0)+(reduced()?0:tension*2),r.y+r.height*.67-(reduced()?0:tension*2),r.width*.14-(reduced()?0:tension*2),r.height*.15);}else rearCtx.drawImage(im,r.x,r.y,r.width,r.height);}
+    if(phone||(tension>0&&!reduced())){rearCtx.save();rearCtx.beginPath();rearCtx.rect(0,0,w,h);rearCtx.rect(r.x+r.width*.25,r.y+r.height*.67,r.width*.14,r.height*.15);rearCtx.clip('evenodd');rearCtx.drawImage(im,r.x,r.y,r.width,r.height);rearCtx.restore();rearCtx.drawImage(im,sx,sy,sw,sh,r.x+r.width*.25+rearHandShift()+(reduced()?0:tension*2),r.y+r.height*.67-(reduced()?0:tension*2),r.width*.14,r.height*.15);}else rearCtx.drawImage(im,r.x,r.y,r.width,r.height);}
 
   // Note edges and body regions share one registration. A wide grazing aperture
   // provides context; distance from the paper controls brightness inside it.
@@ -141,14 +145,14 @@
     {body:[.66,.37,.21,.25],note:[.63,.29],gain:.80}
   ];
   function fragmentBody(index){let [x,y,rx,ry]=fragments[index%6].body;
-    if(phone){if(index%6===1){x+=.10;rx=.22;ry=.24;}if(index%6===3){x=.69;y=.50;rx=.19;ry=.29;}if(index%6===4){x=.70;y=.78;rx=.16;ry=.32;}}
-    const p=rearXY(x,y),r=rearRect();return{x:p.x,y:p.y,rx:r.width*rx,ry:r.height*ry};
+    if(phone){if(index%6===1){rx=.22;ry=.24;}if(index%6===3){x=.69;y=.50;rx=.19;ry=.29;}if(index%6===4){x=.70;y=.78;rx=.16;ry=.32;}}
+    const p=rearXY(x,y),r=rearRect();if(phone&&index%6===1)p.x+=rearHandShift();return{x:p.x,y:p.y,rx:r.width*rx,ry:r.height*ry};
   }
   function notePosition(index,width,height){const [edge,y]=fragments[index%6].note;
     if(phone)return{left:w*.08,top:h*.27};
     return{left:Math.max(w*.06,Math.min(w-width-w*.045,w*edge-width)),top:Math.max(h*.10,Math.min(h*.70-height,h*y-height*.5))};
   }
-  function noteSource(index){const width=phone?w*.84:Math.min(420,Math.max(250,w*.25)),height=phone?174:Math.max(132,Math.min(184,w*.115));
+  function noteSource(index){const width=phone?w*.84:Math.min(420,Math.max(250,w*.25)),height=phone?174*w/384:Math.max(132,Math.min(184,w*.115));
     const p=notePosition(index,width,height);return{left:p.left,top:p.top,width,height};
   }
   function fragment(c,index,alpha,source){const body=fragmentBody(index),note=source||noteSource(index);

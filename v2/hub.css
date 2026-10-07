@@ -171,6 +171,7 @@ html.hub-open,html.hub-open body{touch-action:pan-y}
  .ghost-name{width:calc(var(--phone-unit)*49);height:calc(var(--phone-unit)*10)}
  .hub-index{position:relative;left:auto;bottom:auto;order:2;justify-content:center;gap:calc(var(--phone-unit)*15)}
  .evidence-area{position:relative;left:auto;top:auto;bottom:auto;height:auto;width:calc(100% - var(--phone-unit)*4);margin:0 calc(var(--phone-unit)*2);order:3}
+ .strip-workbench{right:12px;top:calc(100% + 12px)}
  .index-button{font-size:calc(var(--phone-unit)*20);max-width:calc(var(--phone-unit)*75)}
  .index-button .b-face{padding:calc(var(--phone-unit)*8) calc(var(--phone-unit)*15)}
  .dossier{padding:calc(var(--phone-unit)*26) calc(var(--phone-unit)*23) calc(var(--phone-unit)*14)}

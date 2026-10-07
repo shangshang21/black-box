@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>▮▮▮▮▮▮</title>
-<link rel="stylesheet" href="hub.css?v=20261007-review1">
+<link rel="stylesheet" href="hub.css?v=20261007-transitions1">
 <link rel="preload" href="assets/s-plate-k.jpg" as="image" fetchpriority="high">
 <link rel="preload" href="fonts/Anton-400-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/SpaceMono-700-latin.woff2" as="font" type="font/woff2" crossorigin>
@@ -18,8 +18,9 @@
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: #000; overflow: hidden; touch-action: none; }
-  /* Clip the cover-sized scene before it can enlarge a mobile layout viewport. */
-  main { position: fixed; inset: 0; width: 100%; height: 100%; overflow: hidden; }
+  /* Keep the cover-sized scene inside the viewport. Unlike hidden, clip also
+     prevents focus/ENTER from scrolling this container during the hand-off. */
+  main { position: fixed; inset: 0; width: 100%; height: 100%; overflow: clip; }
   body { font-family: 'Space Mono', ui-monospace, monospace; color: var(--paper); }
 
   /* ---------- 场景：分层的动态壁纸。尺寸和位置由 scene.js 按 cover 设置 ---------- */
@@ -195,6 +196,7 @@
 
   /* ---------- 转场：红线绷直，沿线把屏幕切成两半 ---------- */
   .half { position: fixed; inset: 0; z-index: 40; overflow: hidden; pointer-events: none; will-change: transform; }
+  main.entry-transition { pointer-events: none; }
   .slash { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 50; pointer-events: none; display: none; }
   .slash path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
   #slashGlow { stroke: var(--paper); stroke-width: 9; opacity: 0; }                   /* 撕开的白边 */
@@ -331,14 +333,14 @@
   <div class="system-line" id="systemLine" role="status" aria-live="polite"></div><div class="hub-dust" id="hubDust" aria-hidden="true"></div>
 </section>
 
-<script>/* Finale-only iteration loader; normal entry still uses its existing lazy hub loader. */ if(new URLSearchParams(location.search).get("finale")==="1"&&!/[?&]hub=/.test(location.search)){const s=document.createElement("script");s.src="hub.js?v=20261007-review1";s.async=false;addEventListener("DOMContentLoaded",()=>document.head.append(s));}</script>
+<script>/* Finale-only iteration loader; normal entry still uses its existing lazy hub loader. */ if(new URLSearchParams(location.search).get("finale")==="1"&&!/[?&]hub=/.test(location.search)){const s=document.createElement("script");s.src="hub.js?v=20261007-transitions1";s.async=false;addEventListener("DOMContentLoaded",()=>document.head.append(s));}</script>
 <script src="vendor/gsap.min.js"></script>
 <script src="vendor/Draggable.min.js"></script>
 <script src="vendor/InertiaPlugin.min.js"></script>
 <script src="sfx.js"></script>
-<script>if (/[?&]hub=/.test(location.search)) document.write('<script src="hub.js?v=20261007-review1"><\/script>');   // 开发用的直达开关需要它同步加载；正常访问时 hub.js 延后加载（见下面）</script>
+<script>if (/[?&]hub=/.test(location.search)) document.write('<script src="hub.js?v=20261007-transitions1"><\/script>');   // 开发用的直达开关需要它同步加载；正常访问时 hub.js 延后加载（见下面）</script>
 <script src="panels.js"></script>
-<script src="scene.js?v=20261007-review1"></script>
+<script src="scene.js?v=20261007-transitions1"></script>
 <script>
 (() => {
   const $ = (s) => document.querySelector(s);
@@ -371,13 +373,15 @@
   /* 列队页（hub.js）延后加载：它一启动就会请求 4 张大海报（1.6 MB），和首页抢带宽。
      首页稳定后 2.5 秒、或鼠标靠近 / 点击 ENTER 时再取；点得再快，openHub 也会等它加载完。 */
   let hubLoading;
-  const loadHub = () => hubLoading || (hubLoading = new Promise((res) => {
+  const loadHub = () => hubLoading || (hubLoading = new Promise((res, reject) => {
     if (window.BB) return res();
-    const s = document.createElement('script'); s.src = 'hub.js?v=20261007-review1'; s.onload = res; s.onerror = res; document.body.append(s);
+    const s = document.createElement('script'); s.src = 'hub.js?v=20261007-transitions1'; s.onload = res; s.onerror = () => { s.remove(); hubLoading = null; reject(new Error('Hub unavailable')); }; document.body.append(s);
   }));
-  const openHub = () => loadHub().then(() => window.BB && window.BB.openHub());
-  window.Scene.ready.then(() => setTimeout(loadHub, 2500));
-  ['pointerenter', 'focus', 'pointerdown', 'touchstart'].forEach((ev) => enterBtn.addEventListener(ev, loadHub, { once: true, passive: true }));
+  const prepareHub = () => loadHub().then(() => window.BB.prepareHub());
+  const openHub = () => loadHub().then(() => window.BB.openHub());
+  const warmHub = () => prepareHub().catch(() => {});
+  window.Scene.ready.then(() => setTimeout(warmHub, 2500));
+  ['pointerenter', 'focus', 'pointerdown', 'touchstart'].forEach((ev) => enterBtn.addEventListener(ev, warmHub, { once: true, passive: true }));
 
   /* ---------- 回访：只用本机 localStorage，不上传任何东西 ---------- */
   try {
@@ -385,9 +389,29 @@
     localStorage.setItem('bb_seen', String(Date.now()));
   } catch (e) { /* 隐私模式下读不了，就当第一次来 */ }
 
-  /* ---------- ENTER：红线绷直，把屏幕沿线切开（嫌疑人列队还没搭，先停在占位页） ---------- */
+  /* ---------- ENTER：红线绷直，桌面沿线撕开，手机连续进入列队页 ---------- */
   const main = $('main'), slash = $('#slash'), slashLine = $('#slashLine'), slashGlow = $('#slashGlow'), flash = $('#flash');
   let busy = false;
+
+  // Touch browsers keep one already-painted wall; cloning its animated layers
+  // twice forces expensive clipping/rasterization during the hand-off.
+  function mobileSlice(done) {
+    main.classList.add('entry-transition');
+    window.Scene.pull(() => {
+      const pts = window.Scene.threadScreen(60);
+      const d = pts.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+      window.Scene.hideThread(); window.Scene.pause();
+      slashLine.setAttribute('d', d); slash.style.display = 'block';
+      gsap.set(slashLine, { opacity: 1, filter: 'none' }); gsap.set(slashGlow, { opacity: 0 });
+      openHub().then(() => {
+        gsap.set(document.querySelector('#hub'), { opacity: 0 });
+        window.SFX.thud();
+        gsap.timeline({ onComplete: () => { main.style.display = 'none'; main.classList.remove('entry-transition'); slash.style.display = 'none'; done(); } })
+          .to(document.querySelector('#hub'), { opacity: 1, duration: .42, ease: 'power1.inOut' }, 0)
+          .to(slashLine, { opacity: 0, duration: .3, ease: 'power1.out' }, .08);
+      }).catch(() => { main.classList.remove('entry-transition'); slash.style.display = 'none'; window.Scene.resume(); done(); });
+    });
+  }
 
   /* 点 ENTER：握在手里的红线先绷紧，然后画面沿着它的真实形状（带一点撕边的抖动）裂开。
      不再另外冒出一条线：切开的，就是你一直看着的那根线。 */
@@ -438,12 +462,16 @@
   }
 
   enterBtn.addEventListener('pointerdown', () => window.SFX.snap(.24));            // 按下去的一声
-  enterBtn.addEventListener('click', () => {
+  enterBtn.addEventListener('click', async () => {
     if (busy) return; busy = true;
-    const done = () => { busy = false; };
-    window.SFX.whoosh();
-    if (reduce) { main.style.display = 'none'; openHub(); done(); return; }
-    slice(done);
+    enterBtn.disabled = true; enterBtn.setAttribute('aria-busy', 'true');
+    const done = () => { busy = false; enterBtn.disabled = false; enterBtn.removeAttribute('aria-busy'); };
+    try {
+      await prepareHub();
+      window.SFX.whoosh();
+      if (reduce) { await openHub(); main.style.display = 'none'; done(); return; }
+      if (mobileRender) mobileSlice(done); else slice(done);
+    } catch { window.Scene.resume(); done(); }
   });
 })();
 </script>

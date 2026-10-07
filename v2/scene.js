@@ -54,7 +54,8 @@
 
   const sceneEl = document.getElementById('scene');
   const entry = sceneEl.closest('main');
-  const entryInactive = () => document.hidden || entry.style.display === 'none' || entry.style.visibility === 'hidden';
+  let entryPaused = false;
+  const entryInactive = () => entryPaused || document.hidden || entry.style.display === 'none' || entry.style.visibility === 'hidden';
   const enterBtn = document.getElementById('enter');
   const el = (tag, cls, parent) => { const e = document.createElement(tag); if (cls) e.className = cls; (parent || sceneEl).append(e); return e; };
   // 分批加载：不是最要紧的图先不请求，等墙和人物到了再放行（否则几十张图一起抢带宽，最重要的人物反而最后到：限速 5 Mbps 实测 7 秒）
@@ -319,8 +320,10 @@
     const r = sceneEl.getBoundingClientRect(), k = r.width / W;
     return R.map((p) => ({ x: r.left + p.x * k, y: r.top + p.y * k }));
   }
-  const pull = (cb) => gsap.to(th, { k: 1, duration: th.k > .95 ? .01 : .35, ease: 'power3.out', overwrite: true, onComplete: cb });
-  const lead = (on) => gsap.to(th, { k: on ? 1 : 0, duration: on ? .7 : 1, ease: on ? 'power3.out' : 'power2.inOut', overwrite: true });
+  let pulling = false;
+  const pull = (cb) => { pulling = true; return gsap.to(th, { k: 1, duration: th.k > .95 ? .01 : .35, ease: 'power3.out', overwrite: true, onComplete: cb }); };
+  // Hover/focus and the delayed touch hint must not cancel the hand-off callback.
+  const lead = (on) => { if (pulling) return; return gsap.to(th, { k: on ? 1 : 0, duration: on ? .7 : 1, ease: on ? 'power3.out' : 'power2.inOut', overwrite: true }); };
   ['pointerenter', 'focus'].forEach((ev) => enterBtn.addEventListener(ev, () => lead(true)));
   ['pointerleave', 'blur'].forEach((ev) => enterBtn.addEventListener(ev, () => lead(false)));
   if (matchMedia('(hover: none)').matches) setTimeout(() => lead(true), 3200);   // 触屏没有 hover，过一会儿自己拉过去
@@ -447,5 +450,5 @@
   });
 
   // 给首页转场用
-  window.Scene = { who: pick, ready: ready.then(() => {}), threadScreen, pull, hideThread() { thread.style.visibility = 'hidden'; }, handScreen() { const r = hand.getBoundingClientRect(); return { x: r.left, y: r.top }; } };
+  window.Scene = { who: pick, ready: ready.then(() => {}), threadScreen, pull, pause() { entryPaused = true; }, resume() { entryPaused = false; pulling = false; thread.style.visibility = ''; }, hideThread() { thread.style.visibility = 'hidden'; }, handScreen() { const r = hand.getBoundingClientRect(); return { x: r.left, y: r.top }; } };
 })();

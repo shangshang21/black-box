@@ -425,7 +425,9 @@
   const within = (pr, ms) => Promise.race([pr, new Promise((r) => setTimeout(r, ms))]);
   const group = (g) => late.filter((x) => x.group === g);
   const release = (items) => items.forEach((x) => { x.img.src = x.url; });
-  const ready = within(Promise.all([plate, fig, shadow, refl, halo].map(imgDone)), 9000);
+  const criticalReady = Promise.all([plate, fig, shadow, refl, halo].map(imgDone));
+  // A slow mobile connection must not reveal half-decoded layers at 9 seconds.
+  const ready = mobileRender() ? criticalReady : within(criticalReady, 9000);
   ready.then(() => {
     if (!reduce && fig.naturalWidth) startMotion();
     release(group('poster'));
